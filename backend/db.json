@@ -1,0 +1,345 @@
+[
+  {
+    "id": "apex-bank",
+    "name": "Apex Mobile Banking",
+    "platform": "Android",
+    "created": "2026-06-15",
+    "active": false,
+    "qualityScore": 87,
+    "metrics": {
+      "ui": {
+        "passed": 115,
+        "failed": 5,
+        "total": 120
+      },
+      "performance": {
+        "meanResTime": 650,
+        "throughput": 180,
+        "errorPct": 2
+      },
+      "security": {
+        "high": 5,
+        "medium": 10,
+        "low": 2
+      }
+    },
+    "history": [
+      {
+        "build": "Build 103",
+        "date": "2026-07-18",
+        "score": 87,
+        "ui_fail": 5,
+        "perf_err": 2,
+        "sec_high": 5
+      },
+      {
+        "build": "Build 102",
+        "date": "2026-07-18",
+        "score": 88,
+        "ui_fail": 5,
+        "perf_err": 2,
+        "sec_high": 5
+      },
+      {
+        "build": "Build 101",
+        "date": "2026-07-10",
+        "score": 85,
+        "ui_fail": 12,
+        "perf_err": 3.5,
+        "sec_high": 6
+      },
+      {
+        "build": "Build 100",
+        "date": "2026-07-02",
+        "score": 91,
+        "ui_fail": 2,
+        "perf_err": 1.2,
+        "sec_high": 3
+      },
+      {
+        "build": "Build 099",
+        "date": "2026-06-25",
+        "score": 79,
+        "ui_fail": 18,
+        "perf_err": 5,
+        "sec_high": 8
+      }
+    ],
+    "mobsfDetails": [
+      {
+        "severity": "high",
+        "title": "Cleartext HTTP Traffic Allowed",
+        "section": "Manifest",
+        "description": "Cleartext HTTP traffic is permitted (android:usesCleartextTraffic=true) to all endpoints.",
+        "remediation": "Configure a Network Security Config file and enforce HTTPS."
+      },
+      {
+        "severity": "high",
+        "title": "Hardcoded Cryptographic Secret Key",
+        "section": "Code Analysis",
+        "description": "Found a hardcoded 128-bit AES key in com.banking.security.CryptoManager.",
+        "remediation": "Migrate encryption key storage to the Android Keystore system."
+      },
+      {
+        "severity": "high",
+        "title": "Biometric Bypass Vulnerability",
+        "section": "Authentication",
+        "description": "Biometric validation is implemented without crypto object validation. Bypassable via Frida instrumentation.",
+        "remediation": "Implement biometric validation using a Keystore CryptoObject."
+      },
+      {
+        "severity": "high",
+        "title": "Exported Content Providers",
+        "section": "Components",
+        "description": "The content provider 'com.apex.db.DataProvider' is exported without restrictions.",
+        "remediation": "Set android:exported=\"false\" or require custom permissions."
+      },
+      {
+        "severity": "high",
+        "title": "Insecure Clipboard Copy",
+        "section": "Data Leakage",
+        "description": "Sensitive authorization tokens are copied to the clipboard where other apps can access them.",
+        "remediation": "Flag clips containing credentials as sensitive content."
+      },
+      {
+        "severity": "medium",
+        "title": "Weak Hash (SHA-1)",
+        "section": "Cryptographic Errors",
+        "description": "SHA-1 is used for integrity check signatures.",
+        "remediation": "Upgrade hashing functions to SHA-256."
+      },
+      {
+        "severity": "medium",
+        "title": "Obfuscation Disabled",
+        "section": "Manifest",
+        "description": "Release build lacks class and field obfuscation rules.",
+        "remediation": "Enable minifyEnabled true in build.gradle."
+      }
+    ],
+    "appiumDetails": [
+      {
+        "name": "testUserLoginSuccessful",
+        "class": "com.banking.tests.AuthTests",
+        "error": "Assertion failed: expected balance update after transaction. Timeout waiting for element id/balance_text."
+      },
+      {
+        "name": "testQuickTransferShortcut",
+        "class": "com.banking.tests.TransactionTests",
+        "error": "TimeoutException: Expected condition to be: visibility of element located by By.id: bill_pay_success_banner"
+      },
+      {
+        "name": "testAddNewPayee",
+        "class": "com.banking.tests.BillPayTests",
+        "error": "WebDriverException: An unknown server-side error occurred. Could not verify fingerprint enrollment sensor state."
+      },
+      {
+        "name": "testDarkModeToggle",
+        "class": "com.banking.tests.SettingsTests",
+        "error": "AssertionError: Expected support agent status to be 'Online' or 'Away', but got 'Connection Terminated'."
+      },
+      {
+        "name": "testATMBranchLocator",
+        "class": "com.banking.tests.SupportTests",
+        "error": "AssertionFailedError: PDF download was triggered but file size was 0 bytes."
+      }
+    ],
+    "uploadedFiles": [
+      {
+        "name": "appium_ui_report.xml",
+        "type": "appium",
+        "size": "2.8 KB",
+        "date": "2026-07-18 15:20",
+        "content": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite name=\"Appium Mobile UI Tests\" tests=\"120\" failures=\"5\" errors=\"0\" time=\"452.8\">\n  <testcase name=\"testUserLoginSuccessful\" classname=\"com.banking.tests.AuthTests\" time=\"12.4\"/>\n  <testcase name=\"testUserLogout\" classname=\"com.banking.tests.AuthTests\" time=\"8.1\"/>\n  <testcase name=\"testCheckAccountBalance\" classname=\"com.banking.tests.DashboardTests\" time=\"15.3\"/>\n  <testcase name=\"testTransferBetweenAccounts\" classname=\"com.banking.tests.TransactionTests\" time=\"25.6\">\n    <failure message=\"Assertion failed: expected balance update after transaction. Timeout waiting for element id/balance_text.\">\n      at com.banking.tests.TransactionTests.testTransferBetweenAccounts(TransactionTests.java:78)\n    </failure>\n  </testcase>\n  <testcase name=\"testQuickTransferShortcut\" classname=\"com.banking.tests.TransactionTests\" time=\"18.2\"/>\n  <testcase name=\"testBillPaymentElectric\" classname=\"com.banking.tests.BillPayTests\" time=\"30.5\">\n    <failure message=\"TimeoutException: Expected condition to be: visibility of element located by By.id: bill_pay_success_banner\">\n      at org.openqa.selenium.support.ui.WebDriverWait.timeoutException(WebDriverWait.java:95)\n    </failure>\n  </testcase>\n  <testcase name=\"testAddNewPayee\" classname=\"com.banking.tests.BillPayTests\" time=\"22.1\"/>\n  <testcase name=\"testProfileSettingsUpdate\" classname=\"com.banking.tests.SettingsTests\" time=\"14.5\"/>\n  <testcase name=\"testBiometricAuthenticationSetup\" classname=\"com.banking.tests.SettingsTests\" time=\"10.8\">\n    <failure message=\"WebDriverException: An unknown server-side error occurred. Could not verify fingerprint enrollment sensor state.\">\n      at io.appium.java_client.AppiumDriver.execute(AppiumDriver.java:1)\n    </failure>\n  </testcase>\n  <testcase name=\"testDarkModeToggle\" classname=\"com.banking.tests.SettingsTests\" time=\"9.4\"/>\n  <testcase name=\"testHelpCenterFAQSearch\" classname=\"com.banking.tests.SupportTests\" time=\"13.1\"/>\n  <testcase name=\"testContactSupportChat\" classname=\"com.banking.tests.SupportTests\" time=\"45.2\">\n    <failure message=\"AssertionError: Expected support agent status to be 'Online' or 'Away', but got 'Connection Terminated'.\">\n      at com.banking.tests.SupportTests.testContactSupportChat(SupportTests.java:142)\n    </failure>\n  </testcase>\n  <testcase name=\"testATMBranchLocator\" classname=\"com.banking.tests.SupportTests\" time=\"19.7\"/>\n  <testcase name=\"testNotificationSettings\" classname=\"com.banking.tests.SettingsTests\" time=\"11.2\"/>\n  <testcase name=\"testCreditCardStatementDownload\" classname=\"com.banking.tests.DashboardTests\" time=\"28.9\">\n    <failure message=\"AssertionFailedError: PDF download was triggered but file size was 0 bytes.\">\n      at junit.framework.Assert.fail(Assert.java:57)\n    </failure>\n  </testcase>\n</testsuite>"
+      },
+      {
+        "name": "appium-banking-run-102.xml",
+        "type": "appium",
+        "size": "4.2 KB",
+        "date": "2026-07-18 14:22"
+      },
+      {
+        "name": "jmeter-banking-load-102.json",
+        "type": "jmeter",
+        "size": "1.8 KB",
+        "date": "2026-07-18 14:24"
+      },
+      {
+        "name": "mobsf-banking-scan-102.json",
+        "type": "mobsf",
+        "size": "12.5 KB",
+        "date": "2026-07-18 14:25"
+      }
+    ]
+  },
+  {
+    "id": "swift-cart",
+    "name": "SwiftCart E-Commerce",
+    "platform": "iOS",
+    "created": "2026-07-01",
+    "active": false,
+    "qualityScore": 92,
+    "metrics": {
+      "ui": {
+        "passed": 98,
+        "failed": 2,
+        "total": 100
+      },
+      "performance": {
+        "meanResTime": 320,
+        "throughput": 250,
+        "errorPct": 0.5
+      },
+      "security": {
+        "high": 1,
+        "medium": 4,
+        "low": 8
+      }
+    },
+    "history": [
+      {
+        "build": "Build 45",
+        "date": "2026-07-17",
+        "score": 92,
+        "ui_fail": 2,
+        "perf_err": 0.5,
+        "sec_high": 1
+      },
+      {
+        "build": "Build 44",
+        "date": "2026-07-08",
+        "score": 89,
+        "ui_fail": 5,
+        "perf_err": 1,
+        "sec_high": 2
+      }
+    ],
+    "mobsfDetails": [
+      {
+        "severity": "high",
+        "title": "App Transport Security Disabled",
+        "section": "iOS Security",
+        "description": "NSAllowsArbitraryLoads is set to true in Info.plist. Restricts secure network defaults.",
+        "remediation": "Remove NSAllowsArbitraryLoads or list explicit HTTPS domains."
+      }
+    ],
+    "appiumDetails": [
+      {
+        "name": "testApplePayCheckout",
+        "class": "com.swiftcart.checkout",
+        "error": "AssertionError: Apple Pay sheet did not appear within 10 seconds."
+      },
+      {
+        "name": "testPromoCodeApply",
+        "class": "com.swiftcart.cart",
+        "error": "ElementClickInterceptedException: Promo text box was blocked by tutorial overlay."
+      }
+    ],
+    "uploadedFiles": [
+      {
+        "name": "appium-ios-run-45.xml",
+        "type": "appium",
+        "size": "3.1 KB",
+        "date": "2026-07-17 11:00"
+      },
+      {
+        "name": "jmeter-ios-load-45.json",
+        "type": "jmeter",
+        "size": "1.2 KB",
+        "date": "2026-07-17 11:05"
+      },
+      {
+        "name": "mobsf-ios-scan-45.json",
+        "type": "mobsf",
+        "size": "8.4 KB",
+        "date": "2026-07-17 11:10"
+      }
+    ]
+  },
+  {
+    "id": "jasmi-s-new-app",
+    "name": "Jasmi's New App",
+    "platform": "Android",
+    "created": "2026-07-18",
+    "active": true,
+    "qualityScore": 99,
+    "metrics": {
+      "ui": {
+        "passed": 115,
+        "failed": 5,
+        "total": 120
+      },
+      "performance": {
+        "meanResTime": 0,
+        "throughput": 0,
+        "errorPct": 0
+      },
+      "security": {
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      }
+    },
+    "history": [
+      {
+        "build": "Build 102",
+        "date": "2026-07-18",
+        "score": 99,
+        "ui_fail": 5,
+        "perf_err": 0,
+        "sec_high": 0
+      },
+      {
+        "build": "Build 101",
+        "date": "2026-07-18",
+        "score": 99,
+        "ui_fail": 5,
+        "perf_err": 0,
+        "sec_high": 0
+      }
+    ],
+    "mobsfDetails": [],
+    "appiumDetails": [
+      {
+        "name": "testUserLoginSuccessful",
+        "class": "com.banking.tests.AuthTests",
+        "error": "Assertion failed: expected balance update after transaction. Timeout waiting for element id/balance_text."
+      },
+      {
+        "name": "testQuickTransferShortcut",
+        "class": "com.banking.tests.TransactionTests",
+        "error": "TimeoutException: Expected condition to be: visibility of element located by By.id: bill_pay_success_banner"
+      },
+      {
+        "name": "testAddNewPayee",
+        "class": "com.banking.tests.BillPayTests",
+        "error": "WebDriverException: An unknown server-side error occurred. Could not verify fingerprint enrollment sensor state."
+      },
+      {
+        "name": "testDarkModeToggle",
+        "class": "com.banking.tests.SettingsTests",
+        "error": "AssertionError: Expected support agent status to be 'Online' or 'Away', but got 'Connection Terminated'."
+      },
+      {
+        "name": "testATMBranchLocator",
+        "class": "com.banking.tests.SupportTests",
+        "error": "AssertionFailedError: PDF download was triggered but file size was 0 bytes."
+      }
+    ],
+    "uploadedFiles": [
+      {
+        "name": "appium_ui_report.xml",
+        "type": "appium",
+        "size": "2.8 KB",
+        "date": "2026-07-18 16:22",
+        "content": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite name=\"Appium Mobile UI Tests\" tests=\"120\" failures=\"5\" errors=\"0\" time=\"452.8\">\n  <testcase name=\"testUserLoginSuccessful\" classname=\"com.banking.tests.AuthTests\" time=\"12.4\"/>\n  <testcase name=\"testUserLogout\" classname=\"com.banking.tests.AuthTests\" time=\"8.1\"/>\n  <testcase name=\"testCheckAccountBalance\" classname=\"com.banking.tests.DashboardTests\" time=\"15.3\"/>\n  <testcase name=\"testTransferBetweenAccounts\" classname=\"com.banking.tests.TransactionTests\" time=\"25.6\">\n    <failure message=\"Assertion failed: expected balance update after transaction. Timeout waiting for element id/balance_text.\">\n      at com.banking.tests.TransactionTests.testTransferBetweenAccounts(TransactionTests.java:78)\n    </failure>\n  </testcase>\n  <testcase name=\"testQuickTransferShortcut\" classname=\"com.banking.tests.TransactionTests\" time=\"18.2\"/>\n  <testcase name=\"testBillPaymentElectric\" classname=\"com.banking.tests.BillPayTests\" time=\"30.5\">\n    <failure message=\"TimeoutException: Expected condition to be: visibility of element located by By.id: bill_pay_success_banner\">\n      at org.openqa.selenium.support.ui.WebDriverWait.timeoutException(WebDriverWait.java:95)\n    </failure>\n  </testcase>\n  <testcase name=\"testAddNewPayee\" classname=\"com.banking.tests.BillPayTests\" time=\"22.1\"/>\n  <testcase name=\"testProfileSettingsUpdate\" classname=\"com.banking.tests.SettingsTests\" time=\"14.5\"/>\n  <testcase name=\"testBiometricAuthenticationSetup\" classname=\"com.banking.tests.SettingsTests\" time=\"10.8\">\n    <failure message=\"WebDriverException: An unknown server-side error occurred. Could not verify fingerprint enrollment sensor state.\">\n      at io.appium.java_client.AppiumDriver.execute(AppiumDriver.java:1)\n    </failure>\n  </testcase>\n  <testcase name=\"testDarkModeToggle\" classname=\"com.banking.tests.SettingsTests\" time=\"9.4\"/>\n  <testcase name=\"testHelpCenterFAQSearch\" classname=\"com.banking.tests.SupportTests\" time=\"13.1\"/>\n  <testcase name=\"testContactSupportChat\" classname=\"com.banking.tests.SupportTests\" time=\"45.2\">\n    <failure message=\"AssertionError: Expected support agent status to be 'Online' or 'Away', but got 'Connection Terminated'.\">\n      at com.banking.tests.SupportTests.testContactSupportChat(SupportTests.java:142)\n    </failure>\n  </testcase>\n  <testcase name=\"testATMBranchLocator\" classname=\"com.banking.tests.SupportTests\" time=\"19.7\"/>\n  <testcase name=\"testNotificationSettings\" classname=\"com.banking.tests.SettingsTests\" time=\"11.2\"/>\n  <testcase name=\"testCreditCardStatementDownload\" classname=\"com.banking.tests.DashboardTests\" time=\"28.9\">\n    <failure message=\"AssertionFailedError: PDF download was triggered but file size was 0 bytes.\">\n      at junit.framework.Assert.fail(Assert.java:57)\n    </failure>\n  </testcase>\n</testsuite>"
+      },
+      {
+        "name": "appium_ui_report.xml",
+        "type": "appium",
+        "size": "2.8 KB",
+        "date": "2026-07-18 16:22",
+        "content": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite name=\"Appium Mobile UI Tests\" tests=\"120\" failures=\"5\" errors=\"0\" time=\"452.8\">\n  <testcase name=\"testUserLoginSuccessful\" classname=\"com.banking.tests.AuthTests\" time=\"12.4\"/>\n  <testcase name=\"testUserLogout\" classname=\"com.banking.tests.AuthTests\" time=\"8.1\"/>\n  <testcase name=\"testCheckAccountBalance\" classname=\"com.banking.tests.DashboardTests\" time=\"15.3\"/>\n  <testcase name=\"testTransferBetweenAccounts\" classname=\"com.banking.tests.TransactionTests\" time=\"25.6\">\n    <failure message=\"Assertion failed: expected balance update after transaction. Timeout waiting for element id/balance_text.\">\n      at com.banking.tests.TransactionTests.testTransferBetweenAccounts(TransactionTests.java:78)\n    </failure>\n  </testcase>\n  <testcase name=\"testQuickTransferShortcut\" classname=\"com.banking.tests.TransactionTests\" time=\"18.2\"/>\n  <testcase name=\"testBillPaymentElectric\" classname=\"com.banking.tests.BillPayTests\" time=\"30.5\">\n    <failure message=\"TimeoutException: Expected condition to be: visibility of element located by By.id: bill_pay_success_banner\">\n      at org.openqa.selenium.support.ui.WebDriverWait.timeoutException(WebDriverWait.java:95)\n    </failure>\n  </testcase>\n  <testcase name=\"testAddNewPayee\" classname=\"com.banking.tests.BillPayTests\" time=\"22.1\"/>\n  <testcase name=\"testProfileSettingsUpdate\" classname=\"com.banking.tests.SettingsTests\" time=\"14.5\"/>\n  <testcase name=\"testBiometricAuthenticationSetup\" classname=\"com.banking.tests.SettingsTests\" time=\"10.8\">\n    <failure message=\"WebDriverException: An unknown server-side error occurred. Could not verify fingerprint enrollment sensor state.\">\n      at io.appium.java_client.AppiumDriver.execute(AppiumDriver.java:1)\n    </failure>\n  </testcase>\n  <testcase name=\"testDarkModeToggle\" classname=\"com.banking.tests.SettingsTests\" time=\"9.4\"/>\n  <testcase name=\"testHelpCenterFAQSearch\" classname=\"com.banking.tests.SupportTests\" time=\"13.1\"/>\n  <testcase name=\"testContactSupportChat\" classname=\"com.banking.tests.SupportTests\" time=\"45.2\">\n    <failure message=\"AssertionError: Expected support agent status to be 'Online' or 'Away', but got 'Connection Terminated'.\">\n      at com.banking.tests.SupportTests.testContactSupportChat(SupportTests.java:142)\n    </failure>\n  </testcase>\n  <testcase name=\"testATMBranchLocator\" classname=\"com.banking.tests.SupportTests\" time=\"19.7\"/>\n  <testcase name=\"testNotificationSettings\" classname=\"com.banking.tests.SettingsTests\" time=\"11.2\"/>\n  <testcase name=\"testCreditCardStatementDownload\" classname=\"com.banking.tests.DashboardTests\" time=\"28.9\">\n    <failure message=\"AssertionFailedError: PDF download was triggered but file size was 0 bytes.\">\n      at junit.framework.Assert.fail(Assert.java:57)\n    </failure>\n  </testcase>\n</testsuite>"
+      }
+    ]
+  }
+]

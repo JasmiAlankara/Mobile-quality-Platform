@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Unified Quality Evaluation Platform for Mobile Applications</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="view-qa">
+
+  <div class="app-container">
+    
+    <!-- ==========================================
+         SIDEBAR NAVIGATION
+         ========================================== -->
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+              <line x1="15" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="9" x2="9" y2="9"></line>
+              <line x1="3" y1="15" x2="9" y2="15"></line>
+            </svg>
+          </div>
+          <span class="brand-title">AgyMobile QP</span>
+        </div>
+
+        <nav>
+          <ul class="nav-links">
+            <li class="nav-item active">
+              <a href="#dashboard">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+                Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#upload">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                Upload Center
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#applications">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                Applications
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#analytics">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Analytics & Trends
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#history">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                History Logs
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="app-selector-container">
+          <label class="app-selector-label" for="sidebar-app-selector">Active Project</label>
+          <select id="sidebar-app-selector" class="app-select">
+            <!-- App list dynamically populated -->
+          </select>
+        </div>
+        <div class="system-status">
+          <span class="status-dot"></span>
+          <span>Unified Database Sync</span>
+        </div>
+        <div style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-dark); cursor: pointer;" onclick="resetDatabase()">
+          Reset DB to Defaults
+        </div>
+      </div>
+    </aside>
+
+    <!-- ==========================================
+         MAIN CONTENT WINDOW
+         ========================================== -->
+    <main class="main-content">
+      
+      <!-- HEADER -->
+      <header class="main-header">
+        <div class="header-title-section">
+          <h1 id="active-app-name-display">Mobile Banking Application</h1>
+        </div>
+        
+        <!-- Persona Segmented Switcher -->
+        <div class="persona-switcher">
+          <span class="persona-label">Stakeholder View:</span>
+          <button class="persona-btn active" onclick="setStakeholderPersona('qa')">QA</button>
+          <button class="persona-btn" onclick="setStakeholderPersona('dev')">Developer</button>
+          <button class="persona-btn" onclick="setStakeholderPersona('pm')">PM</button>
+          <button class="persona-btn" onclick="setStakeholderPersona('customer')">Customer</button>
+        </div>
+      </header>
+
+      <!-- ==========================================
+           ROUTER VIEW: DASHBOARD
+           ========================================== -->
+      <section id="view-dashboard" class="view-panel active">
+        
+        <!-- Interactive Warning/Context Banner based on Persona selected -->
+        <div class="persona-alert-banner" id="persona-alert-banner">
+          <div class="persona-alert-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="18" height="18"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          </div>
+          <div class="persona-alert-text">
+            <div class="persona-alert-title" id="persona-banner-title">Quality Assurance Console</div>
+            <div id="persona-banner-text">Detailed regressions and manual file ingestion is unlocked.</div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          
+          <!-- Column 1: Overall Quality Score Gauge -->
+          <div class="overview-metrics-card">
+            <div style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">Overall Quality Score</div>
+            
+            <div class="quality-gauge-container">
+              <canvas id="overallGaugeCanvas"></canvas>
+              <div class="quality-gauge-value">
+                <span class="gauge-num" id="overall-score-number">88%</span>
+                <span class="gauge-lbl">Score</span>
+              </div>
+            </div>
+
+            <div id="recommendation-badge" class="release-badge release-testing">
+              <span class="status-dot"></span>
+              READY FOR TESTING
+            </div>
+            <p class="release-desc" id="recommendation-desc">Needs Security Improvements</p>
+          </div>
+
+          <!-- Column 2: Individual Categorized Metrics (Appium, JMeter, MobSF) -->
+          <div class="category-grid">
+            
+            <!-- Appium Card -->
+            <div class="category-card">
+              <div class="card-header">
+                <span class="card-title">UI Testing (Appium)</span>
+                <div class="card-icon-container ui-icon">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                </div>
+              </div>
+              <div>
+                <div class="card-main-score" id="ui-score-display">96%</div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" id="ui-bar" style="width: 96%; background-color: var(--color-success)"></div>
+                </div>
+                <div class="card-metric-list">
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">Passed Tests</span>
+                    <span class="card-metric-val" id="ui-passed-display">115</span>
+                  </div>
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">Failed Tests</span>
+                    <span class="card-metric-val" id="ui-failed-display" style="color: var(--color-danger)">5</span>
+                  </div>
+                </div>
+              </div>
+              <button class="card-action-btn pm-only customer-only" style="opacity: 0.5; pointer-events: none;">Overview Locked</button>
+              <a href="#history" class="card-action-btn qa-only dev-only">Inspect UI Reports</a>
+            </div>
+
+            <!-- JMeter Card -->
+            <div class="category-card">
+              <div class="card-header">
+                <span class="card-title">Performance (JMeter)</span>
+                <div class="card-icon-container perf-icon">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                </div>
+              </div>
+              <div>
+                <div class="card-main-score" id="perf-score-display">85%</div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" id="perf-bar" style="width: 85%; background-color: var(--color-warning)"></div>
+                </div>
+                <div class="card-metric-list">
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">Latency (Avg)</span>
+                    <span class="card-metric-val" id="perf-latency-display">650 ms</span>
+                  </div>
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">Throughput</span>
+                    <span class="card-metric-val" id="perf-throughput-display">180 req/s</span>
+                  </div>
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">Error Rate</span>
+                    <span class="card-metric-val" id="perf-error-display" style="color: var(--color-warning)">2.0%</span>
+                  </div>
+                </div>
+              </div>
+              <button class="card-action-btn pm-only customer-only" style="opacity: 0.5; pointer-events: none;">Overview Locked</button>
+              <a href="#history" class="card-action-btn qa-only dev-only">Analyze Latency</a>
+            </div>
+
+            <!-- MobSF Card -->
+            <div class="category-card">
+              <div class="card-header">
+                <span class="card-title">Security (MobSF)</span>
+                <div class="card-icon-container sec-icon">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+              </div>
+              <div>
+                <div class="card-main-score" id="sec-score-display">81%</div>
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" id="sec-bar" style="width: 81%; background-color: var(--color-warning)"></div>
+                </div>
+                <div class="card-metric-list">
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">High Risks</span>
+                    <span class="card-metric-val" id="sec-high-display" style="color: var(--color-danger)">5</span>
+                  </div>
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">Medium Risks</span>
+                    <span class="card-metric-val" id="sec-med-display" style="color: var(--color-warning)">10</span>
+                  </div>
+                  <div class="card-metric-row">
+                    <span class="card-metric-label">Low Risks</span>
+                    <span class="card-metric-val" id="sec-low-display" style="color: var(--color-info)">2</span>
+                  </div>
+                </div>
+              </div>
+              <button class="card-action-btn pm-only customer-only" style="opacity: 0.5; pointer-events: none;">Overview Locked</button>
+              <a href="#history" class="card-action-btn qa-only dev-only">Audit Vulnerabilities</a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Secondary grid containing UI Failures and Security Alerts (Filtered by Stakeholder Persona) -->
+        <div class="secondary-dashboard-grid dev-only qa-only pm-only">
+          
+          <!-- UI failures list -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <span class="panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Failed UI Test Cases (Appium)
+              </span>
+              <span class="qa-only" style="font-size: 0.75rem; color: var(--text-muted);">QA Review Required</span>
+            </div>
+            
+            <div class="failure-list" id="dashboard-failures-list">
+              <!-- JS Injected -->
+            </div>
+          </div>
+
+          <!-- Security threats list -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <span class="panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                MobSF Security Findings
+              </span>
+              <span class="dev-only" style="font-size: 0.75rem; color: var(--color-warning);">Fix Guidelines Appended</span>
+            </div>
+
+            <div class="sec-vulnerability-list" id="dashboard-vulnerability-list">
+              <!-- JS Injected -->
+            </div>
+          </div>
+
+        </div>
+
+        <div class="customer-only" style="margin-top: 1rem;">
+          <div class="panel-card">
+            <div class="panel-header">
+              <span class="panel-title">Simplifed Summary for Client Review</span>
+            </div>
+            <div style="font-size: 0.95rem; line-height: 1.6; color: var(--text-muted);">
+              All functional capabilities are verified using automated UI tests, showing <strong>96% compliance</strong>. 
+              Performance metrics show responsive transactions under load with an average server processing latency of <strong>650 ms</strong>. 
+              The project is recommended for <strong>Testing Staging</strong> while the team resolves outstanding security patches regarding manifest declarations.
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ==========================================
+           ROUTER VIEW: UPLOAD CENTER
+           ========================================== -->
+      <section id="view-upload" class="view-panel">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Report Ingestion Center</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Upload the output reports generated by your mobile testing pipelines. Our parser dynamically reads and updates the dashboard indicators.</p>
+        
+        <div class="upload-grid">
+          
+          <div class="dropzone-container">
+            
+            <div class="uploader-tool-selector">
+              <button class="tool-badge-btn active appium-btn" onclick="setUploadType('appium')">Appium UI</button>
+              <button class="tool-badge-btn jmeter-btn" onclick="setUploadType('jmeter')">JMeter Performance</button>
+              <button class="tool-badge-btn mobsf-btn" onclick="setUploadType('mobsf')">MobSF Security</button>
+            </div>
+
+            <div class="dropzone" id="report-dropzone">
+              <div class="dropzone-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="28" height="28"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              </div>
+              <div class="dropzone-title">Drag & Drop report file here</div>
+              <div class="dropzone-desc" id="upload-format-description">Supported formats: Appium JUnit XML (.xml)</div>
+              <div style="font-size: 0.8rem; color: var(--text-dark);">or click to browse filesystem</div>
+              <input type="file" id="report-file-input" class="file-input">
+            </div>
+
+          </div>
+
+          <!-- Template Files Downloader -->
+          <div class="samples-box">
+            <h3>Download Test Templates</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.25rem; line-height: 1.4;">Use these pre-formatted sample outputs from mobile device runs to test platform integration and metrics translation.</p>
+            
+            <div class="sample-file-row">
+              <div class="sample-file-info">
+                <span class="sample-file-name">appium_results.xml</span>
+                <span class="sample-file-meta">120 UI cases, 5 fails</span>
+              </div>
+              <button class="download-link-btn" onclick="downloadSampleFile('appium')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                XML
+              </button>
+            </div>
+
+            <div class="sample-file-row">
+              <div class="sample-file-info">
+                <span class="sample-file-name">jmeter_results.json</span>
+                <span class="sample-file-meta">Load statistics, 2% error</span>
+              </div>
+              <button class="download-link-btn" onclick="downloadSampleFile('jmeter-json')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                JSON
+              </button>
+            </div>
+
+            <div class="sample-file-row">
+              <div class="sample-file-info">
+                <span class="sample-file-name">jmeter_results.csv</span>
+                <span class="sample-file-meta">Row-by-row load log format</span>
+              </div>
+              <button class="download-link-btn" onclick="downloadSampleFile('jmeter-csv')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                CSV
+              </button>
+            </div>
+
+            <div class="sample-file-row">
+              <div class="sample-file-info">
+                <span class="sample-file-name">mobsf_scan.json</span>
+                <span class="sample-file-meta">Vulnerabilities static scan report</span>
+              </div>
+              <button class="download-link-btn" onclick="downloadSampleFile('mobsf')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                JSON
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==========================================
+           ROUTER VIEW: APPLICATIONS
+           ========================================== -->
+      <section id="view-applications" class="view-panel">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Applications Manager</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Manage mobile application test suites in the workspace.</p>
+        
+        <div class="apps-grid" id="applications-list-grid">
+          <!-- JS Injected App Cards -->
+        </div>
+      </section>
+
+      <!-- ==========================================
+           ROUTER VIEW: ANALYTICS
+           ========================================== -->
+      <section id="view-analytics" class="view-panel">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Quality Analytics</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Analyze development and quality trends over consecutive build compile intervals.</p>
+        
+        <div class="analytics-grid">
+          
+          <div class="chart-card">
+            <div class="chart-title-section">
+              <span class="chart-label">Unified Quality Score Trend</span>
+              <span style="font-size: 0.75rem; color: var(--color-primary); font-weight: 600;">Overall Target: 90%</span>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="historicalScoreTrendChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title-section">
+              <span class="chart-label">Metric Failures Over Builds</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Lower is Better</span>
+            </div>
+            <div class="chart-canvas-container">
+              <canvas id="historicalMetricsTrendChart"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==========================================
+           ROUTER VIEW: HISTORY LOGS
+           ========================================== -->
+      <section id="view-history" class="view-panel">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">History Logs</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem;">Detailed database audit of uploaded test reports, size metrics, and status.</p>
+        
+        <div class="history-table-container">
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th>Parsed Time</th>
+                <th>Report Type</th>
+                <th>Filename</th>
+                <th>File Size</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- JS Injected -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- ==========================================
+       MODALS SYSTEM
+       ========================================== -->
+
+  <!-- Modal: Create Application -->
+  <div class="modal-overlay" id="createAppModal">
+    <div class="modal-container" style="max-width: 450px;">
+      <div class="modal-header">
+        <div class="modal-title">Create Mobile App Registry</div>
+        <button class="modal-close-btn" onclick="closeModal('createAppModal')">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="create-app-form">
+          <div class="form-group">
+            <label for="new-app-name">Application Name</label>
+            <input type="text" id="new-app-name" class="form-control" placeholder="e.g. HealthCare Mobile" required>
+          </div>
+          <div class="form-group">
+            <label for="new-app-platform">Operating Platform</label>
+            <select id="new-app-platform" class="form-control" style="cursor: pointer;">
+              <option value="Android">Android</option>
+              <option value="iOS">iOS</option>
+            </select>
+          </div>
+          <div style="margin-top: 1.5rem; text-align: right;">
+            <button type="button" class="btn-primary" style="background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); box-shadow: none; margin-right: 0.5rem;" onclick="closeModal('createAppModal')">Cancel</button>
+            <button type="submit" class="btn-primary">Create Project</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Stacktrace Preview -->
+  <div class="modal-overlay" id="stacktraceModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title" id="stacktrace-test-name">testcaseName</div>
+        <button class="modal-close-btn" onclick="closeModal('stacktraceModal')">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Failure Exception Stack Trace:</div>
+        <pre class="code-block" id="stacktrace-code-block"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Report Source Code Preview -->
+  <div class="modal-overlay" id="filePreviewModal">
+    <div class="modal-container" style="max-width: 780px;">
+      <div class="modal-header">
+        <div class="modal-title" id="preview-filename">file_name.json</div>
+        <button class="modal-close-btn" onclick="closeModal('filePreviewModal')">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 600;">Parsed Raw Payload Data:</div>
+        <pre class="code-block" id="preview-code-block" style="color: #92d6ff; max-height: 55vh; overflow-y: auto;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Javascript Modules -->
+  <script src="samples.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
