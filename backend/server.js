@@ -26,6 +26,22 @@ app.use(express.json({ limit: '10mb' }));
 // Setup Multer memory storage for multi-file uploads parsing
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Sri Lankan Time (GMT+5:30) Formatters
+function getSriLankanDateTime() {
+  const d = new Date();
+  const dateStr = d.toLocaleDateString("en-CA", { timeZone: "Asia/Colombo" }); // YYYY-MM-DD
+  const timeStr = d.toLocaleTimeString("en-GB", { timeZone: "Asia/Colombo", hour: '2-digit', minute: '2-digit' }); // HH:MM
+  return `${dateStr} ${timeStr} (SLST)`;
+}
+
+function getSriLankanDate() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Colombo" }); // YYYY-MM-DD
+}
+
+function getSriLankanTime() {
+  return new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Colombo", hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
 /* ==========================================================================
    USER AUTHENTICATION ACCOUNTS & ROLES DATABASE WITH ADMIN APPROVAL
    ========================================================================== */
@@ -49,14 +65,14 @@ function getRolePermissions(role) {
       return {
         roleLabel: "Mobile Developer",
         permissions: {
-          canUpload: false,
+          canUpload: true,
           canViewDashboard: true,
           canViewAnalytics: true,
           canViewHistory: true,
           canCreateApp: false,
           canDeleteApp: false,
           canResetDb: false,
-          allowedTabs: ['dashboard', 'applications', 'analytics', 'history']
+          allowedTabs: ['dashboard', 'upload', 'applications', 'analytics', 'history']
         }
       };
     case 'pm':
@@ -181,7 +197,7 @@ app.post('/api/auth/register', (req, res) => {
     }
 
     const roleDetails = getRolePermissions(role);
-    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+    const timestamp = getSriLankanDateTime();
 
     const newUser = {
       username,
@@ -375,7 +391,8 @@ app.post('/api/applications/:id/upload', upload.array('files'), (req, res) => {
         targetApp.mobsfDetails = parsed.details;
       }
 
-      const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+      const timestamp = getSriLankanDateTime();
+      targetApp.uploadedFiles = targetApp.uploadedFiles || [];
       targetApp.uploadedFiles.unshift({
         name: file.originalname,
         type: resolvedType,
@@ -391,6 +408,7 @@ app.post('/api/applications/:id/upload', upload.array('files'), (req, res) => {
     targetApp.qualityScore = scores.overallScore;
 
     let buildNum = 101;
+    targetApp.history = targetApp.history || [];
     if (targetApp.history.length > 0) {
       const lastBuild = targetApp.history[0].build;
       const num = parseInt(lastBuild.replace("Build ", ""), 10);
@@ -399,7 +417,7 @@ app.post('/api/applications/:id/upload', upload.array('files'), (req, res) => {
 
     targetApp.history.unshift({
       build: `Build ${String(buildNum).padStart(3, '0')}`,
-      date: new Date().toISOString().split("T")[0],
+      date: getSriLankanDate(),
       score: scores.overallScore,
       ui_fail: targetApp.metrics.ui.failed,
       perf_err: targetApp.metrics.performance.errorPct,
@@ -460,7 +478,8 @@ app.post('/api/applications/:id/pipeline/ingest', upload.array('reports'), (req,
         targetApp.mobsfDetails = parsed.details;
       }
 
-      const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+      const timestamp = getSriLankanDateTime();
+      targetApp.uploadedFiles = targetApp.uploadedFiles || [];
       targetApp.uploadedFiles.unshift({
         name: `[CI/CD] ${file.originalname}`,
         type: resolvedType,
@@ -475,9 +494,10 @@ app.post('/api/applications/:id/pipeline/ingest', upload.array('reports'), (req,
     targetApp.qualityScore = scores.overallScore;
 
     let buildLabel = buildNumber ? `Build ${buildNumber}` : `CI Build #${targetApp.history.length + 100}`;
+    targetApp.history = targetApp.history || [];
     targetApp.history.unshift({
       build: buildLabel,
-      date: new Date().toISOString().split("T")[0],
+      date: getSriLankanDate(),
       score: scores.overallScore,
       ui_fail: targetApp.metrics.ui.failed,
       perf_err: targetApp.metrics.performance.errorPct,
@@ -529,7 +549,9 @@ app.post('/api/applications/:id/pipeline/simulate', (req, res) => {
       { severity: "medium", title: "Obfuscation Rule Warning", section: "App Hardening", description: "Proguard rules partially incomplete.", remediation: "Review Proguard mapping file." }
     ];
 
-    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+    const timestamp = getSriLankanDateTime();
+    const slTime = getSriLankanTime();
+    targetApp.uploadedFiles = targetApp.uploadedFiles || [];
     targetApp.uploadedFiles.unshift({
       name: "[GitHub Action #104] appium_results.xml",
       type: "appium",
@@ -545,10 +567,11 @@ app.post('/api/applications/:id/pipeline/simulate', (req, res) => {
     const scores = recalculateQualityMetrics(targetApp);
     targetApp.qualityScore = scores.overallScore;
 
+    targetApp.history = targetApp.history || [];
     const buildLabel = `Build ${100 + targetApp.history.length + 1}`;
     targetApp.history.unshift({
       build: buildLabel,
-      date: new Date().toISOString().split("T")[0],
+      date: getSriLankanDate(),
       score: scores.overallScore,
       ui_fail: targetApp.metrics.ui.failed,
       perf_err: targetApp.metrics.performance.errorPct,
@@ -566,12 +589,12 @@ app.post('/api/applications/:id/pipeline/simulate', (req, res) => {
       commitHash: "c9f1a23",
       branch: "main",
       pipelineLogs: [
-        "14:09:41 [CI] Triggered by push event on branch 'main' (commit c9f1a23)",
-        "14:09:42 [CI] Running Appium UI Tests (120 cases)... Passed: 118, Failed: 2",
-        "14:09:43 [CI] Running JMeter Load Test... Latency: 410ms, Throughput: 220 req/s, Error Rate: 0.8%",
-        "14:09:44 [CI] Running MobSF Static Security Scan... High: 0, Medium: 3, Low: 1",
-        "14:09:45 [CI] Pushing test reports to Unified Quality Platform API...",
-        "14:09:45 [CI] Unified Quality Score updated: " + scores.overallScore + "% (" + scores.recommendation + ")"
+        `${slTime} [CI] Triggered by push event on branch 'main' (commit c9f1a23) [GMT+5:30]`,
+        `${slTime} [CI] Running Appium UI Tests (120 cases)... Passed: 118, Failed: 2`,
+        `${slTime} [CI] Running JMeter Load Test... Latency: 410ms, Throughput: 220 req/s, Error Rate: 0.8%`,
+        `${slTime} [CI] Running MobSF Static Security Scan... High: 0, Medium: 3, Low: 1`,
+        `${slTime} [CI] Pushing test reports to Unified Quality Platform API...`,
+        `${slTime} [CI] Unified Quality Score updated: ${scores.overallScore}% (${scores.recommendation})`
       ]
     });
 

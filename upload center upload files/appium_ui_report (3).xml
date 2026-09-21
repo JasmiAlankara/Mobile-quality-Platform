@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Appium Mobile UI Tests" tests="120" failures="5" errors="0" time="452.8">
+  <testcase name="testUserLoginSuccessful" classname="com.banking.tests.AuthTests" time="12.4"/>
+  <testcase name="testUserLogout" classname="com.banking.tests.AuthTests" time="8.1"/>
+  <testcase name="testCheckAccountBalance" classname="com.banking.tests.DashboardTests" time="15.3"/>
+  <testcase name="testTransferBetweenAccounts" classname="com.banking.tests.TransactionTests" time="25.6">
+    <failure message="Assertion failed: expected balance update after transaction. Timeout waiting for element id/balance_text.">
+      at com.banking.tests.TransactionTests.testTransferBetweenAccounts(TransactionTests.java:78)
+    </failure>
+  </testcase>
+  <testcase name="testQuickTransferShortcut" classname="com.banking.tests.TransactionTests" time="18.2"/>
+  <testcase name="testBillPaymentElectric" classname="com.banking.tests.BillPayTests" time="30.5">
+    <failure message="TimeoutException: Expected condition to be: visibility of element located by By.id: bill_pay_success_banner">
+      at org.openqa.selenium.support.ui.WebDriverWait.timeoutException(WebDriverWait.java:95)
+    </failure>
+  </testcase>
+  <testcase name="testAddNewPayee" classname="com.banking.tests.BillPayTests" time="22.1"/>
+  <testcase name="testProfileSettingsUpdate" classname="com.banking.tests.SettingsTests" time="14.5"/>
+  <testcase name="testBiometricAuthenticationSetup" classname="com.banking.tests.SettingsTests" time="10.8">
+    <failure message="WebDriverException: An unknown server-side error occurred. Could not verify fingerprint enrollment sensor state.">
+      at io.appium.java_client.AppiumDriver.execute(AppiumDriver.java:1)
+    </failure>
+  </testcase>
+  <testcase name="testDarkModeToggle" classname="com.banking.tests.SettingsTests" time="9.4"/>
+  <testcase name="testHelpCenterFAQSearch" classname="com.banking.tests.SupportTests" time="13.1"/>
+  <testcase name="testContactSupportChat" classname="com.banking.tests.SupportTests" time="45.2">
+    <failure message="AssertionError: Expected support agent status to be 'Online' or 'Away', but got 'Connection Terminated'.">
+      at com.banking.tests.SupportTests.testContactSupportChat(SupportTests.java:142)
+    </failure>
+  </testcase>
+  <testcase name="testATMBranchLocator" classname="com.banking.tests.SupportTests" time="19.7"/>
+  <testcase name="testNotificationSettings" classname="com.banking.tests.SettingsTests" time="11.2"/>
+  <testcase name="testCreditCardStatementDownload" classname="com.banking.tests.DashboardTests" time="28.9">
+    <failure message="AssertionFailedError: PDF download was triggered but file size was 0 bytes.">
+      at junit.framework.Assert.fail(Assert.java:57)
+    </failure>
+  </testcase>
+</testsuite>

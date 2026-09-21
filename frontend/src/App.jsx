@@ -7,10 +7,8 @@ import Analytics from './components/Analytics';
 import HistoryLogs from './components/HistoryLogs';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('mqp_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  // Always start on the Login screen when launching/refreshing the app
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [apps, setApps] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -52,7 +50,6 @@ export default function App() {
 
   const handleLoginSuccess = (userProfile) => {
     setCurrentUser(userProfile);
-    localStorage.setItem('mqp_user', JSON.stringify(userProfile));
     setPersona(userProfile.role);
     const defaultTab = userProfile.permissions?.allowedTabs?.[0] || 'dashboard';
     setActiveTab(defaultTab);
@@ -60,7 +57,6 @@ export default function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('mqp_user');
   };
 
   const handleSelectApp = async (appId) => {
@@ -117,7 +113,7 @@ export default function App() {
       case 'customer':
         return {
           title: "Stakeholder Release Summary",
-          text: "Simplified view showing overall testing percentages. Technical logs and stack traces are suppressed for clarity."
+          text: "Simplified view showing overall testing percentages. Technical logs, stack traces, and ingestion tools are suppressed for clarity."
         };
       default:
         return { title: '', text: '' };
@@ -125,10 +121,6 @@ export default function App() {
   };
 
   const handleTabChange = (tabName) => {
-    if (currentUser && currentUser.permissions?.allowedTabs && !currentUser.permissions.allowedTabs.includes(tabName)) {
-      alert(`Access Restricted: Your role (${currentUser.roleLabel}) does not have permission to view this tab.`);
-      return;
-    }
     setActiveTab(tabName);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -139,7 +131,10 @@ export default function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  const allowedTabs = currentUser.permissions?.allowedTabs || ['dashboard', 'applications', 'analytics'];
+  // Customer / Client role has Upload Center & History Logs completely removed
+  const allowedTabs = currentUser.role === 'customer'
+    ? ['dashboard', 'applications', 'analytics']
+    : (currentUser.permissions?.allowedTabs || ['dashboard', 'upload', 'applications', 'analytics', 'history']);
 
   return (
     <div className="site-wrapper">
@@ -358,6 +353,7 @@ export default function App() {
             {activeTab === 'dashboard' && (
               <Dashboard 
                 app={activeApp} 
+                currentUser={currentUser}
                 setStacktraceModal={setStacktraceModal} 
                 openStacktraceModal={() => setStacktraceModal(prev => ({ ...prev, open: true }))}
                 onNavigateTab={handleTabChange}
@@ -367,7 +363,8 @@ export default function App() {
               <UploadCenter 
                 app={activeApp} 
                 onUploadSuccess={fetchApps} 
-                onNavigate={() => setActiveTab('dashboard')}
+                onNavigate={() => handleTabChange('dashboard')}
+                onNavigateTab={handleTabChange}
               />
             )}
             {activeTab === 'applications' && (

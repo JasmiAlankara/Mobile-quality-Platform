@@ -100,12 +100,12 @@ export default function Applications({ apps, fetchApps, onSelect, userPermission
 
               <div className="app-card-score-row">
                 <div className={`app-card-score-circle ${scoreClass}`}>
-                  {app.qualityScore}%
+                  {app.qualityScore || 0}%
                 </div>
                 <div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Release Readiness</div>
                   <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'white' }}>
-                    {app.qualityScore >= 90 && app.metrics.security.high === 0 ? 'RELEASE READY' : (app.metrics.security.high > 2 || app.qualityScore < 75 ? 'NEEDS REFACTORING' : 'READY FOR TESTING')}
+                    {(app.qualityScore || 0) >= 90 && (app.metrics?.security?.high || 0) === 0 ? 'RELEASE READY' : ((app.metrics?.security?.high || 0) > 2 || (app.qualityScore || 0) < 75 ? 'NEEDS REFACTORING' : 'READY FOR TESTING')}
                   </div>
                 </div>
               </div>
@@ -113,15 +113,15 @@ export default function Applications({ apps, fetchApps, onSelect, userPermission
               <div className="app-card-metrics">
                 <div className="app-card-metric-col">
                   <span className="app-card-metric-lbl">UI</span>
-                  <span className="app-card-metric-val">{app.metrics.ui.passed}/{app.metrics.ui.total}</span>
+                  <span className="app-card-metric-val">{app.metrics?.ui?.passed || 0}/{app.metrics?.ui?.total || 0}</span>
                 </div>
                 <div className="app-card-metric-col">
                   <span className="app-card-metric-lbl">Perf</span>
-                  <span className="app-card-metric-val">{app.metrics.performance.meanResTime}ms</span>
+                  <span className="app-card-metric-val">{app.metrics?.performance?.meanResTime || 0}ms</span>
                 </div>
                 <div className="app-card-metric-col">
                   <span className="app-card-metric-lbl">Sec</span>
-                  <span className="app-card-metric-val">{app.metrics.security.high} High</span>
+                  <span className="app-card-metric-val">{app.metrics?.security?.high || 0} High</span>
                 </div>
               </div>
 

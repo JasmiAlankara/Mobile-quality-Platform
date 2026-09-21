@@ -1,0 +1,62 @@
+{
+  "Total": {
+    "transaction": "Total",
+    "sampleCount": 2500,
+    "errorCount": 50,
+    "errorPct": 2.0,
+    "meanResTime": 650.0,
+    "minResTime": 105.0,
+    "maxResTime": 3500.0,
+    "pct1ResTime": 820.0,
+    "pct2ResTime": 1250.0,
+    "pct3ResTime": 2400.0,
+    "throughput": 180.5,
+    "receivedKBytesPerSec": 3240.8,
+    "sentKBytesPerSec": 480.2
+  },
+  "Auth_Login": {
+    "transaction": "Auth_Login",
+    "sampleCount": 800,
+    "errorCount": 8,
+    "errorPct": 1.0,
+    "meanResTime": 420.0,
+    "minResTime": 105.0,
+    "maxResTime": 1500.0,
+    "pct1ResTime": 550.0,
+    "pct2ResTime": 800.0,
+    "pct3ResTime": 1200.0,
+    "throughput": 65.2,
+    "receivedKBytesPerSec": 820.5,
+    "sentKBytesPerSec": 150.3
+  },
+  "Account_Details": {
+    "transaction": "Account_Details",
+    "sampleCount": 1200,
+    "errorCount": 12,
+    "errorPct": 1.0,
+    "meanResTime": 280.0,
+    "minResTime": 90.0,
+    "maxResTime": 980.0,
+    "pct1ResTime": 350.0,
+    "pct2ResTime": 450.0,
+    "pct3ResTime": 720.0,
+    "throughput": 98.4,
+    "receivedKBytesPerSec": 1950.2,
+    "sentKBytesPerSec": 220.5
+  },
+  "Transfer_Funds_API": {
+    "transaction": "Transfer_Funds_API",
+    "sampleCount": 500,
+    "errorCount": 30,
+    "errorPct": 6.0,
+    "meanResTime": 1250.0,
+    "minResTime": 400.0,
+    "maxResTime": 3500.0,
+    "pct1ResTime": 1850.0,
+    "pct2ResTime": 2400.0,
+    "pct3ResTime": 3200.0,
+    "throughput": 16.9,
+    "receivedKBytesPerSec": 470.1,
+    "sentKBytesPerSec": 109.4
+  }
+}

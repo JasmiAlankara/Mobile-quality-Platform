@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { SampleReports } from '../samples';
 
-export default function UploadCenter({ app, onUploadSuccess, onNavigate }) {
+export default function UploadCenter({ app, onUploadSuccess, onNavigate, onNavigateTab }) {
   const [activeSubTab, setActiveSubTab] = useState('dragdrop'); // 'dragdrop' | 'pipeline'
   const [uploadType, setUploadType] = useState('auto'); // 'auto' | 'appium' | 'jmeter' | 'mobsf'
   const [dragOver, setDragOver] = useState(false);
@@ -233,9 +233,9 @@ jobs:
       </div>
 
       {activeSubTab === 'dragdrop' && (
-        <div className="upload-grid">
+        <div className="upload-single-container" style={{ width: '100%', maxWidth: '900px' }}>
           
-          <div className="dropzone-container">
+          <div className="dropzone-container" style={{ width: '100%' }}>
             {/* Tool Selection */}
             <div className="uploader-tool-selector">
               <button 
@@ -271,7 +271,7 @@ jobs:
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current && fileInputRef.current.click()}
-              style={{ pointerEvents: uploading ? 'none' : 'auto', opacity: uploading ? 0.7 : 1 }}
+              style={{ pointerEvents: uploading ? 'none' : 'auto', opacity: uploading ? 0.7 : 1, minHeight: '260px' }}
             >
               <div className="dropzone-icon">
                 {uploading ? (
@@ -299,56 +299,19 @@ jobs:
 
             {/* Batch Processing Output Notification */}
             {uploadResults && (
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '1rem', borderRadius: 'var(--border-radius-md)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--color-success)', marginBottom: '0.25rem' }}>
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '1.25rem', borderRadius: 'var(--border-radius-md)' }}>
+                <div style={{ fontWeight: 700, color: 'var(--color-success)', marginBottom: '0.25rem', fontSize: '1rem' }}>
                   ✔ Successfully Ingested {uploadResults.count} Report File(s)!
                 </div>
-                <div style={{ fontSize: '0.85rem', color: 'white' }}>
-                  New Overall Quality Score: <strong>{uploadResults.qualityScore}%</strong>
+                <div style={{ fontSize: '0.88rem', color: 'white', marginTop: '0.25rem' }}>
+                  New Overall Quality Score: <strong>{uploadResults.qualityScore}%</strong> — Build logs and parsed files saved to database with Sri Lankan Time (SLST).
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
-                  <button className="btn-primary" onClick={onNavigate}>View Updated Dashboard</button>
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
+                  <button className="btn-primary" onClick={onNavigate}>📊 View Updated Dashboard</button>
+                  <button className="btn-primary" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }} onClick={() => onNavigateTab ? onNavigateTab('history') : onNavigate()}>📜 View History Logs</button>
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Download Templates */}
-          <div className="samples-box">
-            <h3>Download Test Templates</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: 1.4 }}>Use these pre-formatted sample outputs from mobile device runs to test platform integration and metrics translation.</p>
-            
-            <div className="sample-file-row">
-              <div className="sample-file-info">
-                <span className="sample-file-name">appium_results.xml</span>
-                <span className="sample-file-meta">120 UI cases, 5 fails</span>
-              </div>
-              <button className="download-link-btn" onClick={() => downloadTemplate('appium')}>XML</button>
-            </div>
-
-            <div className="sample-file-row">
-              <div className="sample-file-info">
-                <span className="sample-file-name">jmeter_results.json</span>
-                <span className="sample-file-meta">Load statistics, 2% error</span>
-              </div>
-              <button className="download-link-btn" onClick={() => downloadTemplate('jmeter-json')}>JSON</button>
-            </div>
-
-            <div className="sample-file-row">
-              <div className="sample-file-info">
-                <span className="sample-file-name">jmeter_results.csv</span>
-                <span className="sample-file-meta">Row-by-row load log format</span>
-              </div>
-              <button className="download-link-btn" onClick={() => downloadTemplate('jmeter-csv')}>CSV</button>
-            </div>
-
-            <div className="sample-file-row">
-              <div className="sample-file-info">
-                <span className="sample-file-name">mobsf_scan.json</span>
-                <span className="sample-file-meta">Vulnerabilities static scan report</span>
-              </div>
-              <button className="download-link-btn" onClick={() => downloadTemplate('mobsf')}>JSON</button>
-            </div>
           </div>
 
         </div>

@@ -112,11 +112,13 @@ export function createApp(name, platform) {
     throw new Error("Application identifier already exists.");
   }
 
+  const createdDate = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Colombo" });
+
   const newApp = {
     id: id,
     name: name,
     platform: platform,
-    created: new Date().toISOString().split("T")[0],
+    created: createdDate,
     active: false,
     qualityScore: 100,
     metrics: {

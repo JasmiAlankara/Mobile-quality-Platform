@@ -1,0 +1,4 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,Latency,IdleTime,Connect
+1721300000000,420,Auth_Login,200,OK,Thread Group 1-1,text,true,,245,120,5,5,400,0,25
+1721300001000,280,Account_Details,200,OK,Thread Group 1-2,text,true,,180,95,5,5,260,0,18
+1721300002000,1250,Transfer_Funds_API,500,Internal Server Error,Thread Group 1-3,text,false,Connection Timeout,0,110,5,5,1200,0,35

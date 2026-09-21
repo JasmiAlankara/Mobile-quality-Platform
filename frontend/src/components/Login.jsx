@@ -5,7 +5,6 @@ export const DEMO_CREDENTIALS = [
     role: 'qa',
     label: 'QA Engineer',
     username: 'qa_engineer',
-    password: 'qa123',
     name: 'Sarah Jenkins (Lead QA)',
     icon: '🧪',
     access: 'Upload Reports, View UI Failures, Inspect Payload Audit Logs',
@@ -15,7 +14,6 @@ export const DEMO_CREDENTIALS = [
     role: 'dev',
     label: 'Mobile Developer',
     username: 'dev_lead',
-    password: 'dev123',
     name: 'Alex Rivera (Senior Mobile Dev)',
     icon: '💻',
     access: 'View Debug Stacktraces, MobSF Patch Guidelines, Git Traceability',
@@ -25,7 +23,6 @@ export const DEMO_CREDENTIALS = [
     role: 'pm',
     label: 'Project Manager (Admin)',
     username: 'pm_admin',
-    password: 'pm123',
     name: 'Marcus Vance (Project Manager)',
     icon: '👑',
     access: 'Admin Console: Approve User Registrations, Create Apps, Delete Apps, Upload Reports, Reset DB',
@@ -35,7 +32,6 @@ export const DEMO_CREDENTIALS = [
     role: 'customer',
     label: 'Customer / Client',
     username: 'client_user',
-    password: 'client123',
     name: 'Enterprise Client Stakeholder',
     icon: '👔',
     access: 'Executive Quality Score Summary, Release Readiness Badge',
@@ -49,7 +45,7 @@ export default function Login({ onLoginSuccess }) {
   
   // Sign In state
   const [username, setUsername] = useState('qa_engineer');
-  const [password, setPassword] = useState('qa123');
+  const [password, setPassword] = useState('');
 
   // Sign Up state
   const [regName, setRegName] = useState('');
@@ -67,7 +63,7 @@ export default function Login({ onLoginSuccess }) {
   const handleRoleSelect = (cred) => {
     setSelectedRole(cred.role);
     setUsername(cred.username);
-    setPassword(cred.password);
+    setPassword('');
     setError('');
     setSuccessInfo('');
   };
@@ -270,16 +266,6 @@ export default function Login({ onLoginSuccess }) {
                 {loading ? 'Authenticating...' : `Sign In as ${activeDemo.label}`}
               </button>
             </form>
-
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              <div style={{ fontWeight: 700, color: 'white', marginBottom: '0.5rem' }}>Pre-approved Admin & Role Demo Accounts:</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontFamily: 'var(--font-mono)' }}>
-                <div>PM Admin: <code>pm_admin / pm123</code></div>
-                <div>QA: <code>qa_engineer / qa123</code></div>
-                <div>DEV: <code>dev_lead / dev123</code></div>
-                <div>CLIENT: <code>client_user / client123</code></div>
-              </div>
-            </div>
           </div>
         )}
 

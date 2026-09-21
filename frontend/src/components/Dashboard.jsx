@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
+export default function Dashboard({ app, currentUser, setStacktraceModal, onNavigateTab }) {
   const [pendingUsers, setPendingUsers] = useState([]);
 
   const fetchPendingUsers = async () => {
@@ -53,26 +53,30 @@ export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
     }
   };
 
-  const metrics = app.metrics;
+  const metrics = app?.metrics || {
+    ui: { passed: 0, failed: 0, total: 0 },
+    performance: { meanResTime: 0, throughput: 0, errorPct: 0 },
+    security: { high: 0, medium: 0, low: 0 }
+  };
   
   // 1. UI Quality Score
-  const uiTotal = metrics.ui.total;
-  const uiPassed = metrics.ui.passed;
-  const uiFailed = metrics.ui.failed;
+  const uiTotal = metrics.ui?.total || 0;
+  const uiPassed = metrics.ui?.passed || 0;
+  const uiFailed = metrics.ui?.failed || 0;
   const uiScore = uiTotal > 0 ? Math.round((uiPassed / uiTotal) * 100) : 0;
   
   // 2. Performance Quality Score
-  const meanResTime = metrics.performance.meanResTime;
-  const throughput = metrics.performance.throughput;
-  const errorPct = metrics.performance.errorPct;
+  const meanResTime = metrics.performance?.meanResTime || 0;
+  const throughput = metrics.performance?.throughput || 0;
+  const errorPct = metrics.performance?.errorPct || 0;
   const errorPenalty = errorPct * 2.0;
   const latencyPenalty = Math.max(0, (meanResTime - 200) / 40);
   const perfScore = Math.max(0, Math.round(100 - (errorPenalty + latencyPenalty)));
   
   // 3. Security Quality Score
-  const secHigh = metrics.security.high;
-  const secMed = metrics.security.medium;
-  const secLow = metrics.security.low;
+  const secHigh = metrics.security?.high || 0;
+  const secMed = metrics.security?.medium || 0;
+  const secLow = metrics.security?.low || 0;
   const totalSecVulns = secHigh + secMed + secLow;
   const securityPenalty = (secHigh * 2.0 + secMed * 0.5 + secLow * 0.1) * 1.25;
   const securityScore = Math.max(0, Math.round(100 - securityPenalty));
@@ -131,8 +135,8 @@ export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
-      {/* Project Manager Admin Quick Action Toolbar (pm-only) */}
-      <div className="pm-only">
+      {/* Project Manager Admin Quick Action Toolbar (PM Only) */}
+      {currentUser?.role === 'pm' && (
         <div style={{ 
           background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.12))', 
           border: '1px solid rgba(16, 185, 129, 0.3)', 
@@ -166,77 +170,77 @@ export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
             </button>
           </div>
         </div>
+      )}
 
-        {/* Pending Registration Requests Card for PM Admin */}
-        {pendingUsers.length > 0 && (
-          <div style={{ 
-            marginTop: '1rem', 
-            backgroundColor: 'rgba(245, 158, 11, 0.08)', 
-            border: '1px solid rgba(245, 158, 11, 0.3)', 
-            borderRadius: 'var(--border-radius-lg)', 
-            padding: '1.25rem' 
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <div style={{ fontWeight: 700, color: 'var(--color-warning)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>⏳</span>
-                <span>Pending Account Registration Requests ({pendingUsers.length})</span>
-              </div>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Action Required: Review and approve or reject user logins</span>
+      {/* Pending Registration Requests Card for PM Admin */}
+      {currentUser?.role === 'pm' && pendingUsers.length > 0 && (
+        <div style={{ 
+          marginTop: '0.5rem', 
+          backgroundColor: 'rgba(245, 158, 11, 0.08)', 
+          border: '1px solid rgba(245, 158, 11, 0.3)', 
+          borderRadius: 'var(--border-radius-lg)', 
+          padding: '1.25rem' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <div style={{ fontWeight: 700, color: 'var(--color-warning)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>⏳</span>
+              <span>Pending Account Registration Requests ({pendingUsers.length})</span>
             </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Action Required: Review and approve or reject user logins</span>
+          </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {pendingUsers.map(user => (
-                <div key={user.username} style={{ 
-                  backgroundColor: 'var(--bg-tertiary)', 
-                  border: '1px solid var(--border-color)', 
-                  borderRadius: 'var(--border-radius-md)', 
-                  padding: '0.85rem 1rem', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem'
-                }}>
-                  <div>
-                    <div style={{ fontWeight: 700, color: 'white', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span>{user.name}</span>
-                      <code style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{user.username}</code>
-                      <span className={`role-pill ${user.role}`}>{user.roleLabel}</span>
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                      Requested: {user.registeredAt} — Awaiting first-time sign in authorization.
-                    </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {pendingUsers.map(user => (
+              <div key={user.username} style={{ 
+                backgroundColor: 'var(--bg-tertiary)', 
+                border: '1px solid var(--border-color)', 
+                borderRadius: 'var(--border-radius-md)', 
+                padding: '0.85rem 1rem', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.75rem'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'white', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <span>{user.name}</span>
+                    <code style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{user.username}</code>
+                    <span className={`role-pill ${user.role}`}>{user.roleLabel}</span>
                   </div>
-
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button 
-                      className="btn-primary" 
-                      style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', backgroundColor: 'var(--color-success)', backgroundImage: 'none' }}
-                      onClick={() => handleApproveUser(user.username)}
-                    >
-                      ✔ Approve Access
-                    </button>
-                    <button 
-                      style={{ 
-                        padding: '0.4rem 0.85rem', 
-                        fontSize: '0.8rem', 
-                        backgroundColor: 'transparent', 
-                        border: '1px solid var(--color-danger)', 
-                        color: 'var(--color-danger)', 
-                        borderRadius: 'var(--border-radius-sm)',
-                        cursor: 'pointer' 
-                      }}
-                      onClick={() => handleRejectUser(user.username)}
-                    >
-                      ❌ Reject
-                    </button>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Requested: {user.registeredAt} — Awaiting first-time sign in authorization.
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    className="btn-primary" 
+                    style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', backgroundColor: 'var(--color-success)', backgroundImage: 'none' }}
+                    onClick={() => handleApproveUser(user.username)}
+                  >
+                    ✔ Approve Access
+                  </button>
+                  <button 
+                    style={{ 
+                      padding: '0.4rem 0.85rem', 
+                      fontSize: '0.8rem', 
+                      backgroundColor: 'transparent', 
+                      border: '1px solid var(--color-danger)', 
+                      color: 'var(--color-danger)', 
+                      borderRadius: 'var(--border-radius-sm)', 
+                      cursor: 'pointer' 
+                    }}
+                    onClick={() => handleRejectUser(user.username)}
+                  >
+                    ❌ Reject
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Top Main Dashboard Grid */}
       <div className="dashboard-grid">
@@ -328,7 +332,9 @@ export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
               </div>
             </div>
 
-            <button className="card-action-btn pm-only customer-only" style={{ opacity: 0.5, pointerEvents: 'none' }}>Overview Locked</button>
+            <button className="card-action-btn" onClick={() => onNavigateTab && onNavigateTab('history')}>
+              Inspect UI Logs
+            </button>
           </div>
 
           {/* 2. JMeter Performance Card */}
@@ -395,7 +401,9 @@ export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
               </div>
             </div>
 
-            <button className="card-action-btn pm-only customer-only" style={{ opacity: 0.5, pointerEvents: 'none' }}>Overview Locked</button>
+            <button className="card-action-btn" onClick={() => onNavigateTab && onNavigateTab('analytics')}>
+              Analyze Latency
+            </button>
           </div>
 
           {/* 3. MobSF Security Card */}
@@ -448,12 +456,14 @@ export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
               <div className="card-metric-row">
                 <span className="card-metric-label">High / Med / Low</span>
                 <span className="card-metric-val">
-                  <span style={{ color: '#ef4444' }}>{secHigh}H</span> <span style={{ color: 'var(--text-muted)' }}>|</span> <span style={{ color: '#f59e0b' }}>{secMed}M</span> <span style={{ color: 'var(--text-muted)' }}>|</span> <span style={{ color: '#06b6d4' }}>{secLow}L</span>
+                  <span style={{ color: secHigh > 0 ? 'var(--color-danger)' : 'white' }}>{secHigh}H</span> | <span style={{ color: secMed > 0 ? 'var(--color-warning)' : 'white' }}>{secMed}M</span> | <span style={{ color: 'var(--color-info)' }}>{secLow}L</span>
                 </span>
               </div>
             </div>
 
-            <button className="card-action-btn pm-only customer-only" style={{ opacity: 0.5, pointerEvents: 'none' }}>Overview Locked</button>
+            <button className="card-action-btn" onClick={() => onNavigateTab && onNavigateTab('dashboard')}>
+              Audit Vulnerabilities
+            </button>
           </div>
 
         </div>

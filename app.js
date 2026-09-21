@@ -1078,7 +1078,17 @@ function initDragAndDrop() {
   const dropzone = document.getElementById("report-dropzone");
   const fileInput = document.getElementById("report-file-input");
 
-  dropzone.addEventListener("click", () => fileInput.click());
+  if (!dropzone || !fileInput) return;
+
+  dropzone.addEventListener("click", (e) => {
+    if (e.target !== fileInput) {
+      fileInput.click();
+    }
+  });
+
+  fileInput.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
 
   dropzone.addEventListener("dragover", (e) => {
     e.preventDefault();
@@ -1092,17 +1102,53 @@ function initDragAndDrop() {
   dropzone.addEventListener("drop", (e) => {
     e.preventDefault();
     dropzone.classList.remove("dragover");
-    if (e.dataTransfer.files.length > 0) {
-      processUploadedFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      for (let i = 0; i < e.dataTransfer.files.length; i++) {
+        processUploadedFile(e.dataTransfer.files[i]);
+      }
     }
   });
 
   fileInput.addEventListener("change", (e) => {
-    if (e.target.files.length > 0) {
-      processUploadedFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      for (let i = 0; i < e.target.files.length; i++) {
+        processUploadedFile(e.target.files[i]);
+      }
       fileInput.value = ""; // Reset
     }
   });
+}
+
+function detectFileType(content, filename) {
+  const lowerName = (filename || "").toLowerCase();
+  const trimmed = (content || "").trim();
+
+  // Appium XML
+  if (lowerName.endsWith(".xml") || trimmed.includes("<testsuite") || trimmed.includes("<testsuites")) {
+    return "appium";
+  }
+  // JMeter CSV
+  if (lowerName.endsWith(".csv") || lowerName.endsWith(".jtl") || (trimmed.toLowerCase().includes("elapsed") && trimmed.toLowerCase().includes("success"))) {
+    return "jmeter";
+  }
+  // JSON formats (JMeter or MobSF)
+  if (lowerName.endsWith(".json") || trimmed.startsWith("{")) {
+    try {
+      const data = JSON.parse(trimmed);
+      if (data.Total || data.total || data.meanResTime !== undefined) {
+        return "jmeter";
+      }
+      if (data.high_vulnerabilities !== undefined || data.vulnerability_details || data.findings || data.security_score !== undefined || data.mobsf) {
+        return "mobsf";
+      }
+    } catch(e) {}
+    if (trimmed.includes("vulnerabilit") || trimmed.includes("security") || trimmed.includes("findings")) {
+      return "mobsf";
+    }
+    return "jmeter";
+  }
+
+  return activeUploadType || "appium";
 }
 
 function processUploadedFile(file) {
@@ -1111,11 +1157,26 @@ function processUploadedFile(file) {
   reader.onload = function(e) {
     const content = e.target.result;
     const activeApp = getActiveApplication();
-    if (!activeApp) return;
+    if (!activeApp) {
+      alert("Please select an active application workspace first.");
+      return;
+    }
+
+    // Auto-detect or use active upload type
+    let resolvedType = activeUploadType;
+    if (activeUploadType === "auto" || !activeUploadType) {
+      resolvedType = detectFileType(content, file.name);
+    } else {
+      // If user selected specific tab, verify if it fits, or auto fallback
+      const detected = detectFileType(content, file.name);
+      if (detected && detected !== activeUploadType) {
+        resolvedType = detected;
+      }
+    }
 
     let parsedData = null;
 
-    if (activeUploadType === "appium") {
+    if (resolvedType === "appium") {
       parsedData = ReportParser.parseAppiumXml(content);
       if (parsedData) {
         activeApp.metrics.ui = {
@@ -1126,7 +1187,7 @@ function processUploadedFile(file) {
         activeApp.appiumDetails = parsedData.details;
       }
     } 
-    else if (activeUploadType === "jmeter") {
+    else if (resolvedType === "jmeter") {
       parsedData = ReportParser.parseJMeter(content, file.name);
       if (parsedData) {
         activeApp.metrics.performance = {
@@ -1136,7 +1197,7 @@ function processUploadedFile(file) {
         };
       }
     } 
-    else if (activeUploadType === "mobsf") {
+    else if (resolvedType === "mobsf") {
       parsedData = ReportParser.parseMobSF(content);
       if (parsedData) {
         activeApp.metrics.security = {
@@ -1153,7 +1214,7 @@ function processUploadedFile(file) {
       const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
       activeApp.uploadedFiles.unshift({
         name: file.name,
-        type: activeUploadType,
+        type: resolvedType,
         size: (file.size / 1024).toFixed(1) + " KB",
         date: timestamp
       });
@@ -1184,9 +1245,10 @@ function processUploadedFile(file) {
       updateApplicationData(activeApp.id, activeApp);
 
       // Trigger user success alert and navigate back to dashboard
-      alert(`Successfully uploaded & aggregated "${file.name}"! Unified quality score is updated to ${evalMetrics.overallScore}%.`);
+      alert(`Successfully uploaded & aggregated "${file.name}" as ${resolvedType.toUpperCase()}! Unified quality score is now ${evalMetrics.overallScore}%.`);
       
       window.location.hash = "#dashboard";
+      renderDashboard();
     }
   };
 
