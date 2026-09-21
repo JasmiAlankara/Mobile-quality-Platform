@@ -1,0 +1,5 @@
+Payload Size (MB),Execution Latency (ms),Throughput (rows/sec)
+1 MB,200,12500
+5 MB,800,15625
+10 MB,1500,16666
+20 MB,2800,17857

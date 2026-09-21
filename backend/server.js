@@ -27,8 +27,239 @@ app.use(express.json({ limit: '10mb' }));
 const upload = multer({ storage: multer.memoryStorage() });
 
 /* ==========================================================================
+   USER AUTHENTICATION ACCOUNTS & ROLES DATABASE WITH ADMIN APPROVAL
+   ========================================================================== */
+function getRolePermissions(role) {
+  switch (role) {
+    case 'qa':
+      return {
+        roleLabel: "QA Engineer",
+        permissions: {
+          canUpload: true,
+          canViewDashboard: true,
+          canViewAnalytics: true,
+          canViewHistory: true,
+          canCreateApp: false,
+          canDeleteApp: false,
+          canResetDb: false,
+          allowedTabs: ['dashboard', 'upload', 'applications', 'analytics', 'history']
+        }
+      };
+    case 'dev':
+      return {
+        roleLabel: "Mobile Developer",
+        permissions: {
+          canUpload: false,
+          canViewDashboard: true,
+          canViewAnalytics: true,
+          canViewHistory: true,
+          canCreateApp: false,
+          canDeleteApp: false,
+          canResetDb: false,
+          allowedTabs: ['dashboard', 'applications', 'analytics', 'history']
+        }
+      };
+    case 'pm':
+      return {
+        roleLabel: "Project Manager (Admin)",
+        permissions: {
+          canUpload: true,
+          canViewDashboard: true,
+          canViewAnalytics: true,
+          canViewHistory: true,
+          canCreateApp: true,
+          canDeleteApp: true,
+          canResetDb: true,
+          allowedTabs: ['dashboard', 'upload', 'applications', 'analytics', 'history']
+        }
+      };
+    case 'customer':
+    default:
+      return {
+        roleLabel: "Customer / Client",
+        permissions: {
+          canUpload: false,
+          canViewDashboard: true,
+          canViewAnalytics: true,
+          canViewHistory: false,
+          canCreateApp: false,
+          canDeleteApp: false,
+          canResetDb: false,
+          allowedTabs: ['dashboard', 'applications', 'analytics']
+        }
+      };
+  }
+}
+
+const USER_ACCOUNTS = [
+  {
+    username: "qa_engineer",
+    password: "qa123",
+    name: "Sarah Jenkins",
+    role: "qa",
+    status: "approved",
+    registeredAt: "2026-07-01 10:00",
+    ...getRolePermissions('qa')
+  },
+  {
+    username: "dev_lead",
+    password: "dev123",
+    name: "Alex Rivera",
+    role: "dev",
+    status: "approved",
+    registeredAt: "2026-07-01 10:00",
+    ...getRolePermissions('dev')
+  },
+  {
+    username: "pm_admin",
+    password: "pm123",
+    name: "Marcus Vance",
+    role: "pm",
+    status: "approved",
+    registeredAt: "2026-07-01 10:00",
+    ...getRolePermissions('pm')
+  },
+  {
+    username: "client_user",
+    password: "client123",
+    name: "Enterprise Client Stakeholder",
+    role: "customer",
+    status: "approved",
+    registeredAt: "2026-07-01 10:00",
+    ...getRolePermissions('customer')
+  }
+];
+
+/* ==========================================================================
    REST API ROUTES
    ========================================================================== */
+
+// 0a. User Login Endpoint
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password required." });
+    }
+
+    const user = USER_ACCOUNTS.find(
+      u => u.username.toLowerCase() === username.toLowerCase() && u.password === password
+    );
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid username or password for selected profession." });
+    }
+
+    // Check if account status is pending PM Admin approval
+    if (user.status === 'pending') {
+      return res.status(403).json({ 
+        error: "Access Pending: Your registration is awaiting approval by a Project Manager Admin (pm_admin). Please contact your administrator to grant access." 
+      });
+    }
+
+    const { password: _, ...userProfile } = user;
+    res.json({
+      success: true,
+      user: userProfile
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 0b. User Registration (Sign Up) Endpoint - Set to 'pending' by default
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const { name, username, password, role } = req.body;
+    if (!name || !username || !password || !role) {
+      return res.status(400).json({ error: "Please fill out all required registration fields." });
+    }
+
+    const existing = USER_ACCOUNTS.find(u => u.username.toLowerCase() === username.toLowerCase());
+    if (existing) {
+      return res.status(400).json({ error: "Username is already taken. Please choose another username." });
+    }
+
+    const roleDetails = getRolePermissions(role);
+    const timestamp = new Date().toISOString().replace("T", " ").substring(0, 16);
+
+    const newUser = {
+      username,
+      password,
+      name,
+      role,
+      status: "pending", // Pending PM Admin Approval
+      registeredAt: timestamp,
+      ...roleDetails
+    };
+
+    USER_ACCOUNTS.push(newUser);
+
+    res.status(201).json({
+      success: true,
+      pendingApproval: true,
+      message: `Account registered successfully! Your requested role (${roleDetails.roleLabel}) is pending PM Admin approval before your first login.`
+    });
+
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 0c. GET Pending User Approvals (PM Admin Only)
+app.get('/api/auth/pending-users', (req, res) => {
+  try {
+    const pendingUsers = USER_ACCOUNTS
+      .filter(u => u.status === 'pending')
+      .map(({ password: _, ...user }) => user);
+
+    res.json(pendingUsers);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 0d. Approve User Registration (PM Admin Action)
+app.post('/api/auth/approve-user', (req, res) => {
+  try {
+    const { username } = req.body;
+    const userIndex = USER_ACCOUNTS.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+    
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User account not found." });
+    }
+
+    USER_ACCOUNTS[userIndex].status = "approved";
+
+    res.json({
+      success: true,
+      message: `Account '${USER_ACCOUNTS[userIndex].username}' has been approved successfully.`
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// 0e. Reject User Registration (PM Admin Action)
+app.post('/api/auth/reject-user', (req, res) => {
+  try {
+    const { username } = req.body;
+    const userIndex = USER_ACCOUNTS.findIndex(u => u.username.toLowerCase() === username.toLowerCase());
+    
+    if (userIndex === -1) {
+      return res.status(404).json({ error: "User account not found." });
+    }
+
+    const removed = USER_ACCOUNTS.splice(userIndex, 1);
+
+    res.json({
+      success: true,
+      message: `Registration request for '${removed[0].username}' has been rejected and removed.`
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // 1. Get all applications
 app.get('/api/applications', (req, res) => {
@@ -156,11 +387,9 @@ app.post('/api/applications/:id/upload', upload.array('files'), (req, res) => {
       results.push({ name: file.originalname, type: resolvedType });
     });
 
-    // Recompute scores
     const scores = recalculateQualityMetrics(targetApp);
     targetApp.qualityScore = scores.overallScore;
 
-    // Increment build numbers
     let buildNum = 101;
     if (targetApp.history.length > 0) {
       const lastBuild = targetApp.history[0].build;
@@ -193,7 +422,7 @@ app.post('/api/applications/:id/upload', upload.array('files'), (req, res) => {
   }
 });
 
-// 7. CI/CD Webhook Pipeline Ingest API Endpoint (GitHub Actions / Jenkins / GitLab CI)
+// 7. CI/CD Webhook Pipeline Ingest API Endpoint
 app.post('/api/applications/:id/pipeline/ingest', upload.array('reports'), (req, res) => {
   try {
     const { id } = req.params;
@@ -284,7 +513,6 @@ app.post('/api/applications/:id/pipeline/simulate', (req, res) => {
 
     const targetApp = apps[appIndex];
     
-    // Simulate improved pipeline build run
     targetApp.metrics = {
       ui: { passed: 118, failed: 2, total: 120 },
       performance: { meanResTime: 410, throughput: 220, errorPct: 0.8 },

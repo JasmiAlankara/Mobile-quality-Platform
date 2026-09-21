@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import UploadCenter from './components/UploadCenter';
 import Applications from './components/Applications';
@@ -6,6 +7,11 @@ import Analytics from './components/Analytics';
 import HistoryLogs from './components/HistoryLogs';
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem('mqp_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [apps, setApps] = useState([]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [persona, setPersona] = useState('qa');
@@ -34,12 +40,28 @@ export default function App() {
     fetchApps();
   }, []);
 
-  // Update body class whenever persona changes
+  // Update persona and body class whenever currentUser changes
   useEffect(() => {
-    document.body.className = `view-${persona}`;
-  }, [persona]);
+    if (currentUser) {
+      setPersona(currentUser.role);
+      document.body.className = `view-${currentUser.role}`;
+    }
+  }, [currentUser]);
 
   const activeApp = apps.find(app => app.active) || apps[0];
+
+  const handleLoginSuccess = (userProfile) => {
+    setCurrentUser(userProfile);
+    localStorage.setItem('mqp_user', JSON.stringify(userProfile));
+    setPersona(userProfile.role);
+    const defaultTab = userProfile.permissions?.allowedTabs?.[0] || 'dashboard';
+    setActiveTab(defaultTab);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('mqp_user');
+  };
 
   const handleSelectApp = async (appId) => {
     try {
@@ -57,6 +79,10 @@ export default function App() {
   };
 
   const handleResetDb = async () => {
+    if (!currentUser || !currentUser.permissions.canResetDb) {
+      alert("Access Denied: Only Project Managers (pm_admin) have permission to reset the database.");
+      return;
+    }
     if (confirm("Reset database to baseline mock data? Any uploaded builds will be deleted.")) {
       try {
         const res = await fetch('/api/applications/reset', { method: 'POST' });
@@ -85,8 +111,8 @@ export default function App() {
         };
       case 'pm':
         return {
-          title: "Project Manager Dashboard",
-          text: `High-level project score stands at ${activeApp.qualityScore}%. Release Readiness recommendation is locked in based on testing benchmarks.`
+          title: "Project Manager Admin Dashboard",
+          text: `Full Project Manager Admin Console active. Workspace score is ${activeApp.qualityScore}%. You have full rights to manage apps and ingest build reports.`
         };
       case 'customer':
         return {
@@ -99,10 +125,21 @@ export default function App() {
   };
 
   const handleTabChange = (tabName) => {
+    if (currentUser && currentUser.permissions?.allowedTabs && !currentUser.permissions.allowedTabs.includes(tabName)) {
+      alert(`Access Restricted: Your role (${currentUser.roleLabel}) does not have permission to view this tab.`);
+      return;
+    }
     setActiveTab(tabName);
     setMobileMenuOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // If user is not logged in, render the Profession Login Portal
+  if (!currentUser) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  const allowedTabs = currentUser.permissions?.allowedTabs || ['dashboard', 'applications', 'analytics'];
 
   return (
     <div className="site-wrapper">
@@ -150,51 +187,62 @@ export default function App() {
 
           {/* Desktop Navigation Links */}
           <nav className="desktop-nav">
-            <button 
-              className={`nav-link-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => handleTabChange('dashboard')}
-            >
-              Dashboard
-            </button>
-            <button 
-              className={`nav-link-btn ${activeTab === 'upload' ? 'active' : ''}`}
-              onClick={() => handleTabChange('upload')}
-            >
-              Upload Center
-            </button>
-            <button 
-              className={`nav-link-btn ${activeTab === 'applications' ? 'active' : ''}`}
-              onClick={() => handleTabChange('applications')}
-            >
-              Applications
-            </button>
-            <button 
-              className={`nav-link-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-              onClick={() => handleTabChange('analytics')}
-            >
-              Analytics
-            </button>
-            <button 
-              className={`nav-link-btn ${activeTab === 'history' ? 'active' : ''}`}
-              onClick={() => handleTabChange('history')}
-            >
-              History Logs
-            </button>
+            {allowedTabs.includes('dashboard') && (
+              <button 
+                className={`nav-link-btn ${activeTab === 'dashboard' ? 'active' : ''}`}
+                onClick={() => handleTabChange('dashboard')}
+              >
+                {currentUser.role === 'pm' ? 'Admin Dashboard' : 'Dashboard'}
+              </button>
+            )}
+            {allowedTabs.includes('upload') && (
+              <button 
+                className={`nav-link-btn ${activeTab === 'upload' ? 'active' : ''}`}
+                onClick={() => handleTabChange('upload')}
+              >
+                Upload Center
+              </button>
+            )}
+            {allowedTabs.includes('applications') && (
+              <button 
+                className={`nav-link-btn ${activeTab === 'applications' ? 'active' : ''}`}
+                onClick={() => handleTabChange('applications')}
+              >
+                Applications
+              </button>
+            )}
+            {allowedTabs.includes('analytics') && (
+              <button 
+                className={`nav-link-btn ${activeTab === 'analytics' ? 'active' : ''}`}
+                onClick={() => handleTabChange('analytics')}
+              >
+                Analytics
+              </button>
+            )}
+            {allowedTabs.includes('history') && (
+              <button 
+                className={`nav-link-btn ${activeTab === 'history' ? 'active' : ''}`}
+                onClick={() => handleTabChange('history')}
+              >
+                History Logs
+              </button>
+            )}
           </nav>
 
-          {/* Right Group: Stakeholder Switcher & Mobile Menu Trigger */}
+          {/* Right Group: Authenticated User Profile Badge & Logout */}
           <div className="header-actions-group">
-            <div className="persona-switcher">
-              <span className="persona-label">View:</span>
-              {['qa', 'dev', 'pm', 'customer'].map(p => (
-                <button 
-                  key={p} 
-                  className={`persona-btn ${persona === p ? 'active' : ''}`}
-                  onClick={() => setPersona(p)}
-                >
-                  {p.toUpperCase()}
-                </button>
-              ))}
+            <div className="user-profile-badge">
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Signed in as:</span>
+              <strong style={{ fontSize: '0.85rem', color: 'white' }}>{currentUser.name}</strong>
+              <span className={`role-pill ${currentUser.role}`}>{currentUser.roleLabel}</span>
+              
+              <button 
+                className="logout-btn" 
+                onClick={handleLogout}
+                title="Sign out of portal"
+              >
+                Logout
+              </button>
             </div>
 
             <button 
@@ -234,21 +282,31 @@ export default function App() {
 
         <nav style={{ margin: '1.5rem 0' }}>
           <ul className="nav-links">
-            <li className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}>
-              <button onClick={() => handleTabChange('dashboard')}>Dashboard</button>
-            </li>
-            <li className={`nav-item ${activeTab === 'upload' ? 'active' : ''}`}>
-              <button onClick={() => handleTabChange('upload')}>Upload Center</button>
-            </li>
-            <li className={`nav-item ${activeTab === 'applications' ? 'active' : ''}`}>
-              <button onClick={() => handleTabChange('applications')}>Applications</button>
-            </li>
-            <li className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`}>
-              <button onClick={() => handleTabChange('analytics')}>Analytics & Trends</button>
-            </li>
-            <li className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}>
-              <button onClick={() => handleTabChange('history')}>History Logs</button>
-            </li>
+            {allowedTabs.includes('dashboard') && (
+              <li className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}>
+                <button onClick={() => handleTabChange('dashboard')}>{currentUser.role === 'pm' ? '👑 Admin Dashboard' : 'Dashboard'}</button>
+              </li>
+            )}
+            {allowedTabs.includes('upload') && (
+              <li className={`nav-item ${activeTab === 'upload' ? 'active' : ''}`}>
+                <button onClick={() => handleTabChange('upload')}>Upload Center</button>
+              </li>
+            )}
+            {allowedTabs.includes('applications') && (
+              <li className={`nav-item ${activeTab === 'applications' ? 'active' : ''}`}>
+                <button onClick={() => handleTabChange('applications')}>Applications</button>
+              </li>
+            )}
+            {allowedTabs.includes('analytics') && (
+              <li className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`}>
+                <button onClick={() => handleTabChange('analytics')}>Analytics & Trends</button>
+              </li>
+            )}
+            {allowedTabs.includes('history') && (
+              <li className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}>
+                <button onClick={() => handleTabChange('history')}>History Logs</button>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -278,7 +336,9 @@ export default function App() {
         ) : !activeApp ? (
           <div style={{ padding: '3rem', textAlign: 'center', minHeight: '50vh' }}>
             <h2>No active application registry found.</h2>
-            <button className="btn-primary" style={{ marginTop: '1rem' }} onClick={() => setActiveTab('applications')}>Go to Applications Manager</button>
+            {currentUser.permissions.canCreateApp && (
+              <button className="btn-primary" style={{ marginTop: '1rem' }} onClick={() => setActiveTab('applications')}>Go to Applications Manager</button>
+            )}
           </div>
         ) : (
           <div className="view-panel">
@@ -300,9 +360,10 @@ export default function App() {
                 app={activeApp} 
                 setStacktraceModal={setStacktraceModal} 
                 openStacktraceModal={() => setStacktraceModal(prev => ({ ...prev, open: true }))}
+                onNavigateTab={handleTabChange}
               />
             )}
-            {activeTab === 'upload' && (
+            {activeTab === 'upload' && allowedTabs.includes('upload') && (
               <UploadCenter 
                 app={activeApp} 
                 onUploadSuccess={fetchApps} 
@@ -314,12 +375,13 @@ export default function App() {
                 apps={apps} 
                 fetchApps={fetchApps} 
                 onSelect={handleSelectApp}
+                userPermissions={currentUser.permissions}
               />
             )}
             {activeTab === 'analytics' && (
               <Analytics app={activeApp} />
             )}
-            {activeTab === 'history' && (
+            {activeTab === 'history' && allowedTabs.includes('history') && (
               <HistoryLogs 
                 app={activeApp} 
                 setSourceModal={setSourceModal} 
@@ -349,7 +411,7 @@ export default function App() {
               A Unified Quality Evaluation Platform for Mobile Applications — Aggregating Appium, Apache JMeter, and MobSF test outputs into actionable quality metrics.
             </p>
             <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--color-primary)', fontWeight: 600 }}>
-              Platform Version v2.4.0-Release
+              Authenticated: {currentUser.name} ({currentUser.roleLabel})
             </div>
           </div>
 
@@ -357,11 +419,11 @@ export default function App() {
           <div className="footer-col">
             <h4>Navigation</h4>
             <ul className="footer-links">
-              <li><button onClick={() => handleTabChange('dashboard')}>Quality Dashboard</button></li>
-              <li><button onClick={() => handleTabChange('upload')}>Report Ingestion Center</button></li>
-              <li><button onClick={() => handleTabChange('applications')}>Applications Registry</button></li>
-              <li><button onClick={() => handleTabChange('analytics')}>Analytics & Trends</button></li>
-              <li><button onClick={() => handleTabChange('history')}>Audit Logs</button></li>
+              {allowedTabs.includes('dashboard') && <li><button onClick={() => handleTabChange('dashboard')}>{currentUser.role === 'pm' ? 'Admin Dashboard' : 'Dashboard'}</button></li>}
+              {allowedTabs.includes('upload') && <li><button onClick={() => handleTabChange('upload')}>Report Ingestion Center</button></li>}
+              {allowedTabs.includes('applications') && <li><button onClick={() => handleTabChange('applications')}>Applications Registry</button></li>}
+              {allowedTabs.includes('analytics') && <li><button onClick={() => handleTabChange('analytics')}>Analytics & Trends</button></li>}
+              {allowedTabs.includes('history') && <li><button onClick={() => handleTabChange('history')}>Audit Logs</button></li>}
             </ul>
           </div>
 
@@ -386,22 +448,24 @@ export default function App() {
               </div>
               <div>Active App: <strong style={{ color: 'white' }}>{activeApp ? activeApp.name : 'None'}</strong></div>
               <div>Database: <strong style={{ color: 'white' }}>db.json Relational Store</strong></div>
-              <button 
-                onClick={handleResetDb} 
-                style={{ 
-                  background: 'none', 
-                  border: '1px solid rgba(239, 68, 68, 0.3)', 
-                  color: 'var(--color-danger)', 
-                  padding: '0.35rem 0.6rem', 
-                  borderRadius: '4px', 
-                  fontSize: '0.75rem',
-                  cursor: 'pointer',
-                  width: 'fit-content',
-                  marginTop: '0.25rem'
-                }}
-              >
-                Reset Database Defaults
-              </button>
+              {currentUser.permissions.canResetDb && (
+                <button 
+                  onClick={handleResetDb} 
+                  style={{ 
+                    background: 'none', 
+                    border: '1px solid rgba(239, 68, 68, 0.3)', 
+                    color: 'var(--color-danger)', 
+                    padding: '0.35rem 0.6rem', 
+                    borderRadius: '4px', 
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    width: 'fit-content',
+                    marginTop: '0.25rem'
+                  }}
+                >
+                  Reset Database Defaults
+                </button>
+              )}
             </div>
           </div>
 
@@ -410,7 +474,7 @@ export default function App() {
         {/* Footer Copyright Bar */}
         <div className="footer-copyright-bar">
           <div>© 2026 Mobile Application Quality Evaluation Platform. All rights reserved.</div>
-          <div style={{ color: 'var(--text-dark)' }}>Built with React, Vite & Express</div>
+          <div style={{ color: 'var(--text-dark)' }}>Authenticated Role: {currentUser.roleLabel}</div>
         </div>
       </footer>
 

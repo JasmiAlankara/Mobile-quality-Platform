@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 4: Node.js Parser Engine Execution Latency Scaling</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0a0e1a;
+      color: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header-bar {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: #3b82f6;
+      margin: 0;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+    .btn-jpg {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-jpg:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+    .diagram-card {
+      background-color: #121829;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 1200px;
+      overflow-x: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+    .caption {
+      margin-top: 15px;
+      font-style: italic;
+      color: #9ca3af;
+      font-size: 1.05rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-bar">
+    <h1>Figure 4: API Latency vs Payload Size Graph</h1>
+    <div class="btn-group">
+      <button class="btn btn-jpg" onclick="exportJPG()">🖼️ Download High-Res JPG</button>
+      <button class="btn" onclick="exportSVG()">📥 Download SVG</button>
+      <button class="btn" onclick="openMermaidLive()">🔗 Edit in Mermaid Live</button>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <pre class="mermaid">
+xychart-beta
+    title "Figure 4: Node.js Parser Engine Execution Latency Scaling"
+    x-axis ["1 MB", "5 MB", "10 MB", "20 MB"]
+    y-axis "Execution Latency (ms)" 0 --> 3000
+    line [200, 800, 1500, 2800]
+    </pre>
+    <div class="caption">Figure 4: Node.js Parser Engine Execution Latency Scaling.</div>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+    function exportJPG() {
+      const svgElement = document.querySelector('.mermaid svg');
+      if (!svgElement) {
+        alert('Diagram is rendering, please wait a moment...');
+        return;
+      }
+
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = function() {
+        const scale = 2;
+        const width = (svgElement.viewBox.baseVal.width || img.width || 1200) * scale;
+        const height = (svgElement.viewBox.baseVal.height || img.height || 600) * scale;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.fillStyle = '#121829';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = jpgDataUrl;
+        downloadLink.download = 'Figure_4_API_Latency_vs_Payload_Size_Graph.jpg';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+      };
+      
+      img.src = url;
+    }
+
+    function exportSVG() {
+      const svgElement = document.querySelector('.mermaid svg');
+      if (!svgElement) {
+        alert('Diagram is rendering, please wait a second...');
+        return;
+      }
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = svgUrl;
+      downloadLink.download = 'Figure_4_API_Latency_vs_Payload_Size_Graph.svg';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
+    function openMermaidLive() {
+      window.open('https://mermaid.live', '_blank');
+    }
+  </script>
+</body>
+</html>

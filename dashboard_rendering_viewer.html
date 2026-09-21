@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figure 4.5: Dashboard Rendering Sequence Diagram Exporter</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0a0e1a;
+      color: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header-bar {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: #3b82f6;
+      margin: 0;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+    .btn-jpg {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-jpg:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+    .diagram-card {
+      background-color: #121829;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 1200px;
+      overflow-x: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-bar">
+    <h1>Figure 4.5: Dashboard Rendering Sequence Diagram</h1>
+    <div class="btn-group">
+      <button class="btn btn-jpg" onclick="exportJPG()">🖼️ Download High-Res JPG</button>
+      <button class="btn" onclick="exportSVG()">📥 Download SVG</button>
+      <button class="btn" onclick="openMermaidLive()">🔗 Edit in Mermaid Live</button>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Browser as 🖥️ User Browser
+    participant React as ⚛️ React UI\n(App.jsx / Dashboard.jsx)
+    participant API as ⚡ Express API\n(server.js)
+    participant DB as 💾 Database Store\n(db.json / database.js)
+
+    Browser->>React: 1. Navigate to Dashboard (http://localhost:5173)
+    activate React
+
+    Note over React: 2. Read LocalStorage ('mqp_user') & inspect User Role\n['qa' | 'dev' | 'pm' | 'customer']
+
+    React->>API: 3. GET /api/applications
+    activate API
+
+    API->>DB: 4. getApplications()\nFetch active Application & TestExecution record
+    activate DB
+    DB-->>API: 5. Return Application Entity (metrics, appiumDetails, mobsfDetails)
+    deactivate DB
+
+    API-->>React: 6. HTTP 200 OK Response (JSON Application Array)
+    deactivate API
+
+    Note over React: 7. Apply CSS Class to Body (view-qa / view-dev / view-pm / view-customer)
+
+    alt Role == Project Manager (pm_admin)
+        React->>React: Render Overall Quality Score Gauge Chart,\nRelease Recommendation Badge, Admin Console & Pending Approvals
+    else Role == Mobile Developer (dev_lead)
+        React->>React: Render Appium UI Locator Stack Traces,\nGit Commit Traceability Metadata & MobSF Patch Guidelines
+    else Role == QA Engineer (qa_engineer)
+        React->>React: Render Smart Upload Dropzone, Appium Donut Chart,\nAudit History Logs & Raw File Source Modals
+    else Role == Customer / Client (client_user)
+        React->>React: Render Executive Summary Box\n(Suppress technical stack traces & raw file payloads)
+    end
+
+    React-->>Browser: 8. Render Role-Customized Interactive Dashboard View
+    deactivate React
+    </pre>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+    function exportJPG() {
+      const svgElement = document.querySelector('.mermaid svg');
+      if (!svgElement) {
+        alert('Diagram is rendering, please wait a moment...');
+        return;
+      }
+
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = function() {
+        const scale = 2;
+        const width = (svgElement.viewBox.baseVal.width || img.width || 1200) * scale;
+        const height = (svgElement.viewBox.baseVal.height || img.height || 1000) * scale;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        ctx.fillStyle = '#121829';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = jpgDataUrl;
+        downloadLink.download = 'Figure_4_5_Dashboard_Rendering_Sequence_Diagram.jpg';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+      };
+      
+      img.src = url;
+    }
+
+    function exportSVG() {
+      const svgElement = document.querySelector('.mermaid svg');
+      if (!svgElement) {
+        alert('Diagram is rendering, please wait a second...');
+        return;
+      }
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = svgUrl;
+      downloadLink.download = 'Figure_4_5_Dashboard_Rendering_Sequence_Diagram.svg';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
+    function openMermaidLive() {
+      window.open('https://mermaid.live', '_blank');
+    }
+  </script>
+</body>
+</html>

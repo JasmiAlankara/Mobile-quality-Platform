@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UML Class Diagram JPG & SVG Exporter</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0a0e1a;
+      color: #f3f4f6;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header-bar {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: #3b82f6;
+      margin: 0;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+    .btn-jpg {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-jpg:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+    .diagram-card {
+      background-color: #121829;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 30px;
+      width: 100%;
+      max-width: 1200px;
+      overflow-x: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-bar">
+    <h1>UML Class Diagram — Mobile Quality Evaluation Platform</h1>
+    <div class="btn-group">
+      <button class="btn btn-jpg" onclick="exportJPG()">🖼️ Download High-Res JPG</button>
+      <button class="btn" onclick="exportSVG()">📥 Download SVG</button>
+      <button class="btn" onclick="openMermaidLive()">🔗 Edit in Mermaid Live</button>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <pre class="mermaid">
+classDiagram
+    class User {
+        -String username
+        -String password
+        -String name
+        -String role
+        -String status
+        -String registeredAt
+        +login(password: String) boolean
+        +getPermissions() UserPermissions
+    }
+
+    class UserPermissions {
+        +boolean canUpload
+        +boolean canViewDashboard
+        +boolean canViewAnalytics
+        +boolean canViewHistory
+        +boolean canCreateApp
+        +boolean canDeleteApp
+        +boolean canResetDb
+        +List~String~ allowedTabs
+    }
+
+    class QAEngineer {
+        +uploadReportFiles()
+    }
+
+    class MobileDeveloper {
+        +viewDebugStacktrace()
+        +viewPatchGuidelines()
+    }
+
+    class ProjectManagerAdmin {
+        +approveUserRegistration(username: String)
+        +rejectUserRegistration(username: String)
+        +createNewApplication(name: String, platform: String)
+        +deleteApplication(id: String)
+        +resetDatabaseDefaults()
+    }
+
+    class CustomerClient {
+        +viewExecutiveSummary()
+    }
+
+    User <|-- QAEngineer
+    User <|-- MobileDeveloper
+    User <|-- ProjectManagerAdmin
+    User <|-- CustomerClient
+    User "1" *-- "1" UserPermissions
+
+    class Application {
+        +String id
+        +String name
+        +String platform
+        +double qualityScore
+        +boolean active
+        +recalculateQualityMetrics() ScoringResult
+    }
+
+    class MetricsData {
+        +UIMetrics ui
+        +PerfMetrics performance
+        +SecurityMetrics security
+    }
+
+    class UIMetrics {
+        +int passed
+        +int failed
+        +int total
+        +double getPassRate()
+    }
+
+    class PerfMetrics {
+        +double meanResTime
+        +double throughput
+        +double errorPct
+    }
+
+    class SecurityMetrics {
+        +int high
+        +int medium
+        +int low
+    }
+
+    class AppiumFailure {
+        +String name
+        +String classPath
+        +String errorMessage
+        +String commitHash
+        +String branchName
+        +String author
+    }
+
+    class MobSFFinding {
+        +String severity
+        +String title
+        +String section
+        +String description
+        +String remediation
+    }
+
+    class BuildHistory {
+        +String buildLabel
+        +String date
+        +double score
+        +int ui_fail
+        +double perf_err
+        +int sec_high
+    }
+
+    class UploadedFile {
+        +String name
+        +String type
+        +String size
+        +String date
+        +String rawContent
+    }
+
+    Application "1" *-- "1" MetricsData
+    MetricsData "1" *-- "1" UIMetrics
+    MetricsData "1" *-- "1" PerfMetrics
+    MetricsData "1" *-- "1" SecurityMetrics
+    Application "1" *-- "*" AppiumFailure
+    Application "1" *-- "*" MobSFFinding
+    Application "1" *-- "*" BuildHistory
+    Application "1" *-- "*" UploadedFile
+
+    class ParserEngine {
+        +detectReportType(content: String, filename: String) String
+        +parseAppiumXml(xmlString: String) AppiumParseResult
+        +parseJMeter(content: String, filename: String) JMeterParseResult
+        +parseMobSF(jsonString: String) MobSFParseResult
+    }
+
+    class ScoringEngine {
+        +computeUIScore(passed: int, total: int) double
+        +computePerfScore(latency: double, errorPct: double) double
+        +computeSecurityScore(high: int, med: int, low: int) double
+        +computeOverallScore(ui: double, perf: double, sec: double) double
+        +getReleaseRecommendation(overallScore: double, secHigh: int) String
+    }
+
+    class DatabaseStore {
+        -List~Application~ applications
+        -List~User~ userAccounts
+        +getApplications() List~Application~
+        +saveApplications(apps: List~Application~)
+        +createApp(name: String, platform: String) Application
+        +deleteApp(id: String)
+        +selectApp(id: String)
+        +resetDatabase() List~Application~
+    }
+
+    class RESTApiController {
+        +handleLogin(username, password)
+        +handleRegister(name, username, password, role)
+        +handlePendingUsers()
+        +handleApproveUser(username)
+        +handleRejectUser(username)
+        +handleFileUpload(appId, files)
+        +handlePipelineIngest(appId, reports, gitMeta)
+        +handlePipelineSimulate(appId)
+    }
+
+    RESTApiController ..> ParserEngine : Uses
+    RESTApiController ..> DatabaseStore : Queries & Updates
+    DatabaseStore ..> ScoringEngine : Invokes Calculation
+    DatabaseStore "1" *-- "*" Application : Stores
+    DatabaseStore "1" *-- "*" User : Stores
+    </pre>
+  </div>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+
+    function exportJPG() {
+      const svgElement = document.querySelector('.mermaid svg');
+      if (!svgElement) {
+        alert('Diagram is rendering, please wait a moment...');
+        return;
+      }
+
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      
+      img.onload = function() {
+        const scale = 2; // High Resolution 2X Scale
+        const width = (svgElement.viewBox.baseVal.width || img.width || 1200) * scale;
+        const height = (svgElement.viewBox.baseVal.height || img.height || 1400) * scale;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // Dark background fill
+        ctx.fillStyle = '#121829';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const jpgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = jpgDataUrl;
+        downloadLink.download = 'UML_Class_Diagram_Mobile_Quality_Platform.jpg';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+      };
+      
+      img.src = url;
+    }
+
+    function exportSVG() {
+      const svgElement = document.querySelector('.mermaid svg');
+      if (!svgElement) {
+        alert('Diagram is rendering, please wait a second...');
+        return;
+      }
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = svgUrl;
+      downloadLink.download = 'UML_Class_Diagram_Mobile_Quality_Platform.svg';
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    }
+
+    function openMermaidLive() {
+      window.open('https://mermaid.live', '_blank');
+    }
+  </script>
+</body>
+</html>

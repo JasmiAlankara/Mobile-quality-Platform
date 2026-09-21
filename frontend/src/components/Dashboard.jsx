@@ -1,6 +1,58 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function Dashboard({ app, setStacktraceModal }) {
+export default function Dashboard({ app, setStacktraceModal, onNavigateTab }) {
+  const [pendingUsers, setPendingUsers] = useState([]);
+
+  const fetchPendingUsers = async () => {
+    try {
+      const res = await fetch('/api/auth/pending-users');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setPendingUsers(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingUsers();
+  }, []);
+
+  const handleApproveUser = async (username) => {
+    try {
+      const res = await fetch('/api/auth/approve-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || `User '${username}' approved! They can now log in.`);
+        fetchPendingUsers();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleRejectUser = async (username) => {
+    if (confirm(`Reject registration request for '${username}'?`)) {
+      try {
+        const res = await fetch('/api/auth/reject-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        if (res.ok) {
+          fetchPendingUsers();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   const metrics = app.metrics;
   
   // 1. UI Quality Score
@@ -68,7 +120,6 @@ export default function Dashboard({ app, setStacktraceModal }) {
     ? historyBuilds.map(h => Math.round(650 - (h.score * 4)))
     : [720, 680, 650, 620, meanResTime];
   
-  // Sparkline path generator
   const maxVal = Math.max(...sparklineData, 1000);
   const minVal = Math.min(...sparklineData, 200);
   const sparkPoints = sparklineData.map((val, idx) => {
@@ -80,6 +131,113 @@ export default function Dashboard({ app, setStacktraceModal }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
+      {/* Project Manager Admin Quick Action Toolbar (pm-only) */}
+      <div className="pm-only">
+        <div style={{ 
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.12))', 
+          border: '1px solid rgba(16, 185, 129, 0.3)', 
+          padding: '1.25rem', 
+          borderRadius: 'var(--border-radius-lg)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div>
+            <div style={{ fontSize: '1rem', fontWeight: 800, color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>👑</span>
+              <span>Project Manager Admin Control Console</span>
+            </div>
+            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+              Full administrative privileges unlocked for <strong>{app.name}</strong>.
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button className="btn-primary" onClick={() => onNavigateTab && onNavigateTab('applications')}>
+              + Create New Project
+            </button>
+            <button className="btn-primary" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }} onClick={() => onNavigateTab && onNavigateTab('upload')}>
+              📁 Ingest Reports
+            </button>
+            <button className="btn-primary" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)' }} onClick={() => onNavigateTab && onNavigateTab('analytics')}>
+              📊 View Analytics
+            </button>
+          </div>
+        </div>
+
+        {/* Pending Registration Requests Card for PM Admin */}
+        {pendingUsers.length > 0 && (
+          <div style={{ 
+            marginTop: '1rem', 
+            backgroundColor: 'rgba(245, 158, 11, 0.08)', 
+            border: '1px solid rgba(245, 158, 11, 0.3)', 
+            borderRadius: 'var(--border-radius-lg)', 
+            padding: '1.25rem' 
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 700, color: 'var(--color-warning)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>⏳</span>
+                <span>Pending Account Registration Requests ({pendingUsers.length})</span>
+              </div>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Action Required: Review and approve or reject user logins</span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {pendingUsers.map(user => (
+                <div key={user.username} style={{ 
+                  backgroundColor: 'var(--bg-tertiary)', 
+                  border: '1px solid var(--border-color)', 
+                  borderRadius: 'var(--border-radius-md)', 
+                  padding: '0.85rem 1rem', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: 'white', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>{user.name}</span>
+                      <code style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>@{user.username}</code>
+                      <span className={`role-pill ${user.role}`}>{user.roleLabel}</span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      Requested: {user.registeredAt} — Awaiting first-time sign in authorization.
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      className="btn-primary" 
+                      style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', backgroundColor: 'var(--color-success)', backgroundImage: 'none' }}
+                      onClick={() => handleApproveUser(user.username)}
+                    >
+                      ✔ Approve Access
+                    </button>
+                    <button 
+                      style={{ 
+                        padding: '0.4rem 0.85rem', 
+                        fontSize: '0.8rem', 
+                        backgroundColor: 'transparent', 
+                        border: '1px solid var(--color-danger)', 
+                        color: 'var(--color-danger)', 
+                        borderRadius: 'var(--border-radius-sm)',
+                        cursor: 'pointer' 
+                      }}
+                      onClick={() => handleRejectUser(user.username)}
+                    >
+                      ❌ Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Top Main Dashboard Grid */}
       <div className="dashboard-grid">
         
@@ -119,7 +277,7 @@ export default function Dashboard({ app, setStacktraceModal }) {
         {/* 3 Domain Category Cards */}
         <div className="category-grid">
           
-          {/* 1. Appium UI Testing Card with Donut Slice */}
+          {/* 1. Appium UI Testing Card */}
           <div className="category-card">
             <div className="card-header">
               <span className="card-title">UI Testing (Appium)</span>
@@ -129,12 +287,9 @@ export default function Dashboard({ app, setStacktraceModal }) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
-              {/* Donut Chart Visualizer */}
               <div style={{ position: 'relative', width: '84px', height: '84px', flexShrink: 0 }}>
                 <svg width="84" height="84" viewBox="0 0 84 84" style={{ transform: 'rotate(-90deg)' }}>
-                  {/* Failure Red Slice */}
                   <circle cx="42" cy="42" r={donutRadius} fill="transparent" stroke="#ef4444" strokeWidth="10" />
-                  {/* Pass Thick Green Slice */}
                   <circle
                     cx="42"
                     cy="42"
@@ -176,7 +331,7 @@ export default function Dashboard({ app, setStacktraceModal }) {
             <button className="card-action-btn pm-only customer-only" style={{ opacity: 0.5, pointerEvents: 'none' }}>Overview Locked</button>
           </div>
 
-          {/* 2. JMeter Performance Card with Sparkline & Safe Checkmark */}
+          {/* 2. JMeter Performance Card */}
           <div className="category-card">
             <div className="card-header">
               <span className="card-title">Performance (JMeter)</span>
@@ -189,7 +344,6 @@ export default function Dashboard({ app, setStacktraceModal }) {
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <div className="card-main-score" style={{ marginBottom: 0 }}>{perfScore}%</div>
                 
-                {/* Safe Threshold Checkmark Indicator */}
                 <div style={{ 
                   display: 'inline-flex', 
                   alignItems: 'center', 
@@ -213,7 +367,6 @@ export default function Dashboard({ app, setStacktraceModal }) {
                 </div>
               </div>
 
-              {/* Sparkline Mini Line Graph (without axes) */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0, 0, 0, 0.2)', padding: '0.4rem 0.75rem', borderRadius: 'var(--border-radius-sm)' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Response Trend</span>
                 <svg width="130" height="40" style={{ overflow: 'visible' }}>
@@ -245,7 +398,7 @@ export default function Dashboard({ app, setStacktraceModal }) {
             <button className="card-action-btn pm-only customer-only" style={{ opacity: 0.5, pointerEvents: 'none' }}>Overview Locked</button>
           </div>
 
-          {/* 3. MobSF Security Card with Stacked Severity Bar & Traffic Lights */}
+          {/* 3. MobSF Security Card */}
           <div className="category-card">
             <div className="card-header">
               <span className="card-title">Security (MobSF)</span>
@@ -258,7 +411,6 @@ export default function Dashboard({ app, setStacktraceModal }) {
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <div className="card-main-score" style={{ marginBottom: 0 }}>{securityScore}%</div>
                 
-                {/* Traffic Light Warning Badge for High Vulnerabilities */}
                 <div style={{ 
                   display: 'inline-flex', 
                   alignItems: 'center', 
@@ -279,7 +431,6 @@ export default function Dashboard({ app, setStacktraceModal }) {
                 </div>
               </div>
 
-              {/* Horizontal Stacked Bar Chart */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
                   <span>Severity Distribution</span>
@@ -331,7 +482,6 @@ export default function Dashboard({ app, setStacktraceModal }) {
                   </div>
                   <div className="failure-msg">{fail.error}</div>
                   
-                  {/* Git Metadata Block for Defect Traceability */}
                   <div style={{ 
                     display: 'flex', 
                     flexWrap: 'wrap',
@@ -385,7 +535,6 @@ export default function Dashboard({ app, setStacktraceModal }) {
                 <div className={`sec-vulnerability-item ${vuln.severity}`} key={i}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
                     <span className={`vuln-badge ${vuln.severity}`}>{vuln.severity}</span>
-                    {/* Actionable Alert: Red Warning Icon specifically placed next to High vulnerabilities */}
                     {vuln.severity === 'high' && (
                       <span title="Actionable High Risk Alert" style={{ fontSize: '1rem' }}>🚨</span>
                     )}
